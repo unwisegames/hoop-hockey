@@ -49,7 +49,9 @@ struct BarrierImpl : public BodyShapes<Barrier> {
 };
 
 struct Game::Members : GameImpl<CharacterImpl, PlatformImpl, BarrierImpl> {
-    ShapePtr worldBox, walls[2], hoop[2], dunk;
+    ShapePtr worldBox{sensor(boxShape(30, 30, {0, 0}, 0), ct_universe)};
+    ShapePtr walls[2], hoop[2];
+    ShapePtr dunk{sensor(segmentShape({-1, 6}, {1, 6}), ct_dunk)};
     Game::State state = playing;
     size_t score = 0;
 };
@@ -62,8 +64,6 @@ Game::Game() : m{new Members} {
     };
 
     createCharacter();
-
-    m->worldBox = m->sensor(m->boxShape(30, 30, {0, 0}, 0), ct_universe);
 
     for (int i = 0; i < 2; ++i) {
         m->walls[i] = m->segmentShape({12 * (i - 0.5f), -30}, {12 * (i - 0.5f), 30});
@@ -78,8 +78,6 @@ Game::Game() : m{new Members} {
 
         m->actors<BarrierImpl>().emplace(m->spaceTime.staticBody, hinge, 0.5f - i);
     }
-
-    m->dunk = m->sensor(m->segmentShape({-1, 6}, {1, 6}), ct_dunk);
 
     m->onCollision([=](CharacterImpl &, PlatformImpl & platform) {
         m->removeWhenSpaceUnlocked(platform);
