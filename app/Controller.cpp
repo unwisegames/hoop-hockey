@@ -1,5 +1,6 @@
 #include "Controller.h"
 #include "atlas.sprites.h"
+#include "background.sprites.h"
 
 using namespace brac;
 
@@ -27,6 +28,8 @@ void Controller::onUpdate(float dt) {
 }
 
 void Controller::onDraw() {
+    SpriteProgram::draw(background.bg, pmv()); // * mat4::translate({5, 0, 0}));
+
     SpriteProgram::draw(m->game->actors<Platform>   (), pmv());
     SpriteProgram::draw(m->game->actors<Character>  (), pmv());
 }
