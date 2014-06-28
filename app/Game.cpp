@@ -87,16 +87,15 @@ Game::Game() : m{new Members} {
     });
 
     m->onSeparate([=](CharacterImpl & character, PlatformImpl &, cpArbiter * arb) {
-        float m = character.mass();
+        constexpr float m = 1; // Normalised mass
         float E_kinetic = 0.5 * m * length_sq(character.vel());
         float E_potential = m * GRAVITY * (START_HEIGHT - character.pos().y);
         float E = E_kinetic + E_potential;
 
-        //std::cerr << "E = " << E << "\n";
-        if (fabsf(E) > 1 && E_potential < 0) {
-            // In initial experiments, the ball exited the hoop with about -120 J.
-            character.setVel(sqrtf(-2 * E_potential / m) * unit(character.vel()));
-            //cpArbiterSetElasticity(arb, 1 + 0.2 * (0.5 - smootherstep(-200.0f, 200.0f, E)));
+        // In initial experiments, the ball exited the hoop with about -120 J.
+        if (float dE = E < 0 ? std::min(-E, 60.0f) : E > 10 ? E : 0) {
+            E_kinetic += dE;
+            character.setVel(sqrtf(2 * E_kinetic / m) * unit(character.vel()));
         }
     });
 
