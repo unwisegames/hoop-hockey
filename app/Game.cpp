@@ -3,18 +3,20 @@
 
 #include <bricabrac/Game/GameActorImpl.h>
 #include <bricabrac/Game/Timer.h>
+#include <bricabrac/Math/MathUtil.h>
 
 constexpr float START_HEIGHT = 9;
+constexpr float GRAVITY = -30;
 
 using namespace brac;
 
-enum Group : cpGroup { gr_platform = 1 };
+enum Group : cpGroup { gr_platform = 1, gr_ring };
 
 enum CollisionType : cpCollisionType { ct_universe = 1, ct_dunk };
 
 struct CharacterImpl : BodyShapes<Character> {
     CharacterImpl(int personality, vec2 const & pos)
-    : BodyShapes(newBody(1, 10, pos), atlas.characters[personality][0])
+    : BodyShapes{newBody(1, 10, pos), atlas.characters[personality][0]}
     {
         for (auto & shape : shapes()) cpShapeSetElasticity(&*shape, 1);
     }
@@ -23,29 +25,40 @@ struct CharacterImpl : BodyShapes<Character> {
 struct PlatformImpl : public BodyShapes<Platform> {
     ShapePtr circle;
 
-    PlatformImpl(vec2 const & pos) : BodyShapes(newStaticBody(pos), atlas.platform, CP_NO_GROUP) {
+    PlatformImpl(vec2 const & pos) : BodyShapes{newStaticBody(pos), atlas.platform, CP_NO_GROUP} {
         // Replace shrinkwrapped shape with a perfect circle.
         for (auto & shape : shapes()) cpShapeSetLayers(&*shape, 0);
-        circle = newCircleShape(20, {0, -20})(body());
+        circle = newCircleShape(10, {0, -10})(body());
         cpShapeSetElasticity(&*circle, 1);
         //cpShapeSetFriction(&*circle, INFINITY);
     }
 };
 
-struct Game::Members : GameImpl<CharacterImpl, PlatformImpl> {
-    ShapePtr worldBox;
-    ShapePtr walls[2];
-    ShapePtr hoop[2];
-    ShapePtr dunk;
+struct BarrierImpl : public BodyShapes<Barrier> {
+    ConstraintPtr pivot, limit, spring;
+
+    BarrierImpl(cpBody * world, vec2 const & hinge, float angle)
+    : BodyShapes{newBody(0.1, 10, hinge), newBoxShape(0.1, 1.8, {0, -0.8}), gr_ring}
+    {
+        setAngle(angle);
+
+        pivot = newPivotJoint(world, body(), hinge);
+        limit = newRotaryLimitJoint(world, body(), std::min(0.0f, angle), std::max(0.0f, angle));
+        spring = newDampedRotarySpring(world, body(), -2 * angle, 80);
+    }
+};
+
+struct Game::Members : GameImpl<CharacterImpl, PlatformImpl, BarrierImpl> {
+    ShapePtr worldBox, walls[2], hoop[2], dunk;
     Game::State state = playing;
     size_t score = 0;
 };
 
 Game::Game() : m{new Members} {
-    m->setGravity({0, -30});
+    m->setGravity({0, GRAVITY});
 
     auto createCharacter = [=]{
-        m->actors<CharacterImpl>().emplace(0, vec2{-0*5, START_HEIGHT});
+        m->actors<CharacterImpl>().emplace(0, vec2{-0.4, START_HEIGHT});
     };
 
     createCharacter();
@@ -53,19 +66,40 @@ Game::Game() : m{new Members} {
     m->worldBox = m->sensor(m->boxShape(30, 30, {0, 0}, 0), ct_universe);
 
     for (int i = 0; i < 2; ++i) {
-        m->walls[i] = m->segmentShape({12.0f * i - 6, -30}, {12.0f * i - 6, 30});
-        cpShapeSetElasticity(&*m->walls[i], 1);
+        m->walls[i] = m->segmentShape({12 * (i - 0.5f), -30}, {12 * (i - 0.5f), 30});
+        cpShapeSetElasticity(&*m->walls[i], 0.7);
     }
 
     for (int i = 0; i < 2; ++i) {
-        m->hoop[i] = m->circleShape(0.2, {2.0f * i - 1, 6});
-        cpShapeSetElasticity(&*m->hoop[i], 1);
+        vec2 hinge{2.0f * i - 1, 6};
+        m->hoop[i] = m->circleShape(0.2, hinge);
+        cpShapeSetGroup(&*m->hoop[i], gr_ring);
+        cpShapeSetElasticity(&*m->hoop[i], 0.3);
+
+        m->actors<BarrierImpl>().emplace(m->spaceTime.staticBody, hinge, 0.5f - i);
     }
 
     m->dunk = m->sensor(m->segmentShape({-1, 6}, {1, 6}), ct_dunk);
 
-    m->onCollision([=](CharacterImpl & character, PlatformImpl & platform) {
+    m->onCollision([=](CharacterImpl &, PlatformImpl & platform) {
         m->removeWhenSpaceUnlocked(platform);
+    });
+
+    m->onPreSolve([=](CharacterImpl & character, PlatformImpl &, cpArbiter * arb) {
+    });
+
+    m->onSeparate([=](CharacterImpl & character, PlatformImpl &, cpArbiter * arb) {
+        float m = character.mass();
+        float E_kinetic = 0.5 * m * length_sq(character.vel());
+        float E_potential = m * GRAVITY * (START_HEIGHT - character.pos().y);
+        float E = E_kinetic + E_potential;
+
+        //std::cerr << "E = " << E << "\n";
+        if (fabsf(E) > 1 && E_potential < 0) {
+            // In initial experiments, the ball exited the hoop with about -120 J.
+            character.setVel(sqrtf(-2 * E_potential / m) * unit(character.vel()));
+            //cpArbiterSetElasticity(arb, 1 + 0.2 * (0.5 - smootherstep(-200.0f, 200.0f, E)));
+        }
     });
 
     m->onSeparate([=](CharacterImpl & character, NoActor<ct_universe> &) {

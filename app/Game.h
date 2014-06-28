@@ -6,6 +6,7 @@
 
 struct Character : brac::Actor { enum State { neutral, happy, sad, excited }; };
 struct Platform : brac::Actor { };
+struct Barrier : brac::Actor { };
 
 class Game : public brac::GameBase {
 public:
