@@ -19,7 +19,9 @@ public:
     ~Game();
 
     size_t score() const;
-
+    State state() const;
+    void end();
+    
     virtual std::unique_ptr<brac::TouchHandler> fingerTouch(brac::vec2 const & p, float radius) override;
 
 private:

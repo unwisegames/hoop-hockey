@@ -69,7 +69,7 @@ Game::Game() : m{new Members} {
         m->walls[i] = m->segmentShape({12 * (i - 0.5f), -30}, {12 * (i - 0.5f), 30});
         cpShapeSetElasticity(&*m->walls[i], 0.7);
     }
-
+    
     for (int i = 0; i < 2; ++i) {
         vec2 hinge{2.0f * i - 1, 6};
         m->hoop[i] = m->circleShape(0.2, hinge);
@@ -102,11 +102,13 @@ Game::Game() : m{new Members} {
     m->onSeparate([=](CharacterImpl & character, NoActor<ct_universe> &) {
         m->removeWhenSpaceUnlocked(character);
         createCharacter();
+        //end();
     });
 
     m->onSeparate([=](CharacterImpl & character, NoActor<ct_dunk> &, cpArbiter * arb) {
         if (character.vel().y < 0) {
-            std::cerr << "Scored!\n";
+            ++m->score;
+            std::cerr << "Scored!\n" + std::to_string(m->score);
         }
     });
 }
@@ -114,6 +116,13 @@ Game::Game() : m{new Members} {
 Game::~Game() { }
 
 size_t Game::score() const { return m->score; }
+
+Game::State Game::state() const { return m->state; }
+
+void Game::end() {
+    m->state = stopped;
+    ended(score());
+}
 
 std::unique_ptr<TouchHandler> Game::fingerTouch(vec2 const & p, float radius) {
     auto platform = makeActor<PlatformImpl>(p);

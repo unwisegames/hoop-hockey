@@ -1,6 +1,7 @@
 #include "Controller.h"
 #include "atlas.sprites.h"
 #include "background.sprites.h"
+#include "digifont.sprites.h"
 
 using namespace brac;
 
@@ -32,6 +33,15 @@ void Controller::onDraw() {
 
     SpriteProgram::draw(m->game->actors<Platform>   (), pmv());
     SpriteProgram::draw(m->game->actors<Character>  (), pmv());
+
+    //std::cerr << "onDraw " + std::to_string(m->game->score());
+    SpriteProgram::drawText(std::to_string(m->game->score()), digifont.glyphs, TextAlign::right,
+                            pmv() * mat4::translate({5, 0, 0}));
+
+    if (m->game->state() == Game::State::stopped) {
+        SpriteProgram::drawText(std::to_string(m->game->score()), digifont.glyphs, TextAlign::right,
+                                pmv() * mat4::translate({0, 0, 0}));
+    }
 }
 
 std::unique_ptr<TouchHandler> Controller::onTouch(vec2 const & worldPos, float radius) {
