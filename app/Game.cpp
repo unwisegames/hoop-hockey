@@ -65,7 +65,7 @@ Game::Game() : m{new Members} {
     m->setGravity({0, GRAVITY});
 
     auto createCharacter = [=]{
-        m->actors<CharacterImpl>().emplace(0, vec2{-0.4, START_HEIGHT});
+        m->actors<CharacterImpl>().emplace(0, vec2{-4, START_HEIGHT});
     };
 
     createCharacter();
@@ -145,6 +145,7 @@ std::unique_ptr<TouchHandler> Game::fingerTouch(vec2 const & p, float radius) {
         virtual void moved(vec2 const & p, bool) {
             adjustSprings(p);
         }
+
         virtual void ended() {
             self.m->removeWhenSpaceUnlocked(*self.m->actors<PlatformImpl>().begin());
         }
