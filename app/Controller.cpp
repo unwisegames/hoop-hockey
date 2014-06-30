@@ -29,14 +29,15 @@ void Controller::onUpdate(float dt) {
 }
 
 void Controller::onDraw() {
-    SpriteProgram::draw(background.bg, pmv()); // * mat4::translate({5, 0, 0}));
+    SpriteProgram::draw(background.bg, pmv() * mat4::translate({0, -0.3, 0}));
+    
+    SpriteProgram::draw(atlas.scoreboard, pmv() * mat4::scale(0.7) * mat4::translate({0, 13, 0}));
 
     //SpriteProgram::draw(m->game->actors<Platform>   (), pmv());
     SpriteProgram::draw(m->game->actors<Character>  (), pmv());
 
-    //std::cerr << "onDraw " + std::to_string(m->game->score());
     SpriteProgram::drawText(std::to_string(m->game->score()), digifont.glyphs, TextAlign::right,
-                            pmv() * mat4::translate({5, 0, 0}));
+                            pmv() * mat4::translate({1.3, 8.7, 0}) * mat4::scale(0.35));
 
     if (m->game->state() == Game::State::stopped) {
         SpriteProgram::drawText(std::to_string(m->game->score()), digifont.glyphs, TextAlign::right,

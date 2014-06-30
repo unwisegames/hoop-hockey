@@ -15,4 +15,5 @@ sprites(
         character(0, 2),
     ],
     platform=floodfill((4.5, 6.5), scale=20),
+    scoreboard=floodfill((8, 7), scale=20)
 )
