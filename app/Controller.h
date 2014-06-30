@@ -20,7 +20,7 @@ private:
 
     virtual void onUpdate(float dt) override;
     virtual void onDraw() override;
-    virtual void onResize(brac::vec2 const & size) override { ortho_x(6); }
+    virtual void onResize(brac::vec2 const & size) override;
     virtual std::unique_ptr<brac::TouchHandler> onTouch(brac::vec2 const & worldPos, float radius) override;
 };
 

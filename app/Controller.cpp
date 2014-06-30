@@ -29,7 +29,7 @@ void Controller::onUpdate(float dt) {
 }
 
 void Controller::onDraw() {
-    SpriteProgram::draw(background.bg, pmv() * mat4::translate({0, -0.3, 0}));
+    SpriteProgram::draw(background.bg, pmv());
     
     SpriteProgram::draw(atlas.scoreboard, pmv() * mat4::scale(0.7) * mat4::translate({0, 13, 0}));
 
@@ -43,6 +43,11 @@ void Controller::onDraw() {
         SpriteProgram::drawText(std::to_string(m->game->score()), digifont.glyphs, TextAlign::right,
                                 pmv() * mat4::translate({0, 0, 0}));
     }
+}
+
+void Controller::onResize(brac::vec2 const & size) {
+    float halfH = 0.5 * background.bg.size().y;
+    ortho(-6, -6, 6, 6, 0, -INFINITY, halfH, halfH);
 }
 
 std::unique_ptr<TouchHandler> Controller::onTouch(vec2 const & worldPos, float radius) {
