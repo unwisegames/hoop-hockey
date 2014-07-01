@@ -11,6 +11,7 @@ struct Barrier : brac::Actor { };
 class Game : public brac::GameBase {
 public:
     enum State { playing, stopped };
+    enum HoopState { hoop_on = 1, hoop_off = 0 };
 
     brac::Signal<void(Character const &)> bounced;
     brac::Signal<void(size_t score)> scored;
@@ -23,6 +24,7 @@ public:
 
     size_t score() const;
     State state() const;
+    HoopState hoop_state() const;
     void end();
     
     virtual std::unique_ptr<brac::TouchHandler> fingerTouch(brac::vec2 const & p, float radius) override;

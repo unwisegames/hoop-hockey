@@ -59,6 +59,7 @@ struct Game::Members : GameImpl<CharacterImpl, PlatformImpl, BarrierImpl> {
     size_t score = 0;
     size_t n_for_n = 0;
     bool touched_sides = false;
+    Game::HoopState hoop_state = hoop_off;
 };
 
 Game::Game() : m{new Members} {
@@ -100,18 +101,21 @@ Game::Game() : m{new Members} {
         }
         ++m->n_for_n;
         m->touched_sides = false;
+        m->hoop_state = hoop_off;
     });
 
     m->onSeparate([=](CharacterImpl & character, NoActor<ct_universe> &) {
         m->removeWhenSpaceUnlocked(character);
         createCharacter();
         m->score = 0;
+        m->hoop_state = hoop_off;
         //end();
     });
 
     m->onSeparate([=](CharacterImpl & character, NoActor<ct_dunk> &, cpArbiter * arb) {
         if (character.vel().y < 0) {
             scored(++m->score);
+            m->hoop_state = hoop_on;
             if (++m->n_for_n > 2) {
                 n_for_n(m->n_for_n / 2);
             }
@@ -132,6 +136,8 @@ Game::~Game() { }
 size_t Game::score() const { return m->score; }
 
 Game::State Game::state() const { return m->state; }
+
+Game::HoopState Game::hoop_state() const { return m->hoop_state; }
 
 void Game::end() {
     m->state = stopped;
