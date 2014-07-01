@@ -15,7 +15,7 @@ enum Group : cpGroup { gr_platform = 1, gr_ring };
 
 enum Layer : cpLayers { l_play = 1<<0, l_fixtures = 1<<1 };
 
-enum CollisionType : cpCollisionType { ct_universe = 1, ct_dunk };
+enum CollisionType : cpCollisionType { ct_universe = 1, ct_sides, ct_dunk };
 
 struct CharacterImpl : BodyShapes<Character> {
     CharacterImpl(int personality, vec2 const & pos)
@@ -57,6 +57,8 @@ struct Game::Members : GameImpl<CharacterImpl, PlatformImpl, BarrierImpl> {
     ShapePtr dunk{sensor(segmentShape({-1, 6}, {1, 6}), ct_dunk)};
     Game::State state = playing;
     size_t score = 0;
+    size_t n_for_n = 0;
+    bool touched_sides = false;
 };
 
 Game::Game() : m{new Members} {
@@ -86,10 +88,19 @@ Game::Game() : m{new Members} {
         auto & hoop = m->hoop[i] = m->circleShape(0.2, hinge);
         cpShapeSetGroup(&*hoop, gr_ring);
         cpShapeSetLayers(&*hoop, l_fixtures);
+        cpShapeSetCollisionType(&*hoop, ct_sides);
         cpShapeSetElasticity(&*hoop, 0.3);
 
         m->actors<BarrierImpl>().emplace(world, hinge, 0.5f - i);
     }
+
+    m->onSeparate([=](CharacterImpl &, PlatformImpl &) {
+        if (m->n_for_n % 2 != 0) {
+            m->n_for_n = 0;
+        }
+        ++m->n_for_n;
+        m->touched_sides = false;
+    });
 
     m->onSeparate([=](CharacterImpl & character, NoActor<ct_universe> &) {
         m->removeWhenSpaceUnlocked(character);
@@ -100,9 +111,19 @@ Game::Game() : m{new Members} {
 
     m->onSeparate([=](CharacterImpl & character, NoActor<ct_dunk> &, cpArbiter * arb) {
         if (character.vel().y < 0) {
-            ++m->score;
-            std::cerr << "Scored " + std::to_string(m->score) + "\n";
+            scored(++m->score);
+            if (++m->n_for_n > 2) {
+                n_for_n(m->n_for_n / 2);
+            }
+            if (!m->touched_sides) {
+                sharpshot();
+            }
+            //std::cerr << "Scored " + std::to_string(m->score) + "\n";
         }
+    });
+
+    m->onCollision([=](CharacterImpl &, NoActor<ct_sides> &) {
+        m->touched_sides = true;
     });
 }
 
@@ -130,7 +151,7 @@ std::unique_ptr<TouchHandler> Game::fingerTouch(vec2 const & p, float radius) {
             cpBody * world = self.m->spaceTime.staticBody;
 
             constexpr float c = 50000;
-            constexpr float k = c * c / (4 * M_PLATFORM);
+            constexpr float k = c * c / (4 * M_PLATFORM);  // Critically damped
 
             finger[0].reset(cpDampedSpringNew(world, platform.body(), {1000, 0}, {0, 0}, 1000, k, c));
             finger[1].reset(cpDampedSpringNew(world, platform.body(), {0, 1000}, {0, 0}, 1000, k, c));
@@ -142,12 +163,12 @@ std::unique_ptr<TouchHandler> Game::fingerTouch(vec2 const & p, float radius) {
             adjustSprings(p);
         }
 
-        virtual void moved(vec2 const & p, bool) {
-            adjustSprings(p);
+        ~BounceTouchHandler() {
+            self.m->removeWhenSpaceUnlocked(*self.m->actors<PlatformImpl>().begin());
         }
 
-        virtual void ended() {
-            self.m->removeWhenSpaceUnlocked(*self.m->actors<PlatformImpl>().begin());
+        virtual void moved(vec2 const & p, bool) {
+            adjustSprings(p);
         }
 
         void adjustSprings(vec2 const & p) {

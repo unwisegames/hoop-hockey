@@ -13,6 +13,9 @@ public:
     enum State { playing, stopped };
 
     brac::Signal<void(Character const &)> bounced;
+    brac::Signal<void(size_t score)> scored;
+    brac::Signal<void(size_t n)> n_for_n; // n hoops from n hits
+    brac::Signal<void()> sharpshot;
     brac::Signal<void(size_t const &)> ended;
 
     Game();

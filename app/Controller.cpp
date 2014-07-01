@@ -1,7 +1,10 @@
 #include "Controller.h"
+#include "brag.h"
 #include "atlas.sprites.h"
 #include "background.sprites.h"
 #include "digifont.sprites.h"
+
+#include <iostream>
 
 using namespace brac;
 
@@ -21,6 +24,29 @@ Controller::~Controller() { }
 
 void Controller::newGame() {
     m->game.reset(new Game);
+
+    // TODO: Announce achievements.
+
+    m->game->scored.connect([=](size_t score) {
+        if (score <= 25) {
+            brag::score25(4 * score, []{});
+        }
+        if (score <= 100) {
+            brag::score100(score, []{});
+        }
+    });
+
+    m->game->n_for_n.connect([=](size_t n){
+        switch (n) {
+            case 2: brag::twofortwo(100, []{}); break;
+            case 3: brag::hattrick(100, []{}); break;
+            case 4: brag::hattrick2(100, []{}); break;
+        }
+    });
+
+    m->game->sharpshot.connect([=]{
+        brag::sharpshot(100, []{});
+    });
 }
 
 void Controller::onUpdate(float dt) {
