@@ -2,7 +2,7 @@
 #include "brag.h"
 #include "atlas.sprites.h"
 #include "background.sprites.h"
-#include "digifont.sprites.h"
+#include "scorefont.sprites.h"
 
 #include <iostream>
 
@@ -59,14 +59,15 @@ void Controller::onDraw() {
     
     SpriteProgram::draw(atlas.scoreboard, pmv() * mat4::scale(0.7) * mat4::translate({0, 13, 0}));
 
+    SpriteProgram::drawText(std::to_string(m->game->score()), scorefont.glyphs, TextAlign::right,
+                            pmv() * mat4::translate({1.25, 8.7, 0}));
+
     //SpriteProgram::draw(m->game->actors<Platform>   (), pmv());
     SpriteProgram::draw(m->game->actors<Character>  (), pmv());
 
-    SpriteProgram::drawText(std::to_string(m->game->score()), digifont.glyphs, TextAlign::right,
-                            pmv() * mat4::translate({1.3, 8.7, 0}) * mat4::scale(0.35));
 
     if (m->game->state() == Game::State::stopped) {
-        SpriteProgram::drawText(std::to_string(m->game->score()), digifont.glyphs, TextAlign::right,
+        SpriteProgram::drawText(std::to_string(m->game->score()), scorefont.glyphs, TextAlign::right,
                                 pmv() * mat4::translate({0, 0, 0}));
     }
 }
