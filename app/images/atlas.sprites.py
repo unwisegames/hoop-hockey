@@ -17,7 +17,7 @@ sprites(
     platform=floodfill((4.5, 6.5), scale=20),
     scoreboard=floodfill((8, 7), scale=20),
     hoop=[
-        floodfill((4.5, 9.3), scale=12),
-        floodfill((8.5, 9.2), scale=12)
+        floodfill((4.5, 9.3), scale=12, origin='centroid'),
+        floodfill((8.5, 9.2), scale=12, origin='centroid')
     ]
 )
