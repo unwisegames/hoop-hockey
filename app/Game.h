@@ -8,24 +8,22 @@ struct Character : brac::Actor { enum State { neutral, happy, sad, excited }; };
 struct Platform : brac::Actor { };
 struct Barrier : brac::Actor { };
 
-class Game : public brac::GameBase {
+class Game : public brac::GameBase, public std::enable_shared_from_this<Game> {
 public:
-    enum State { playing, stopped };
     enum HoopState { hoop_on = 1, hoop_off = 0 };
 
-    brac::Signal<void(Character const &)> bounced;
-    brac::Signal<void(size_t score)> scored;
+    brac::Signal<void(Character const &, brac::vec2 const & impulse)> bounced;
+    brac::Signal<void()> scored;
+
+    // Achievement-related events
     brac::Signal<void(size_t n)> n_for_n; // n hoops from n hits
     brac::Signal<void()> sharpshot;
-    brac::Signal<void(size_t const &)> ended;
 
     Game();
     ~Game();
 
     size_t score() const;
-    State state() const;
     HoopState hoop_state() const;
-    void end();
     
     virtual std::unique_ptr<brac::TouchHandler> fingerTouch(brac::vec2 const & p, float radius) override;
 

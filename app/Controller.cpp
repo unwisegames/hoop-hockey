@@ -12,7 +12,7 @@ using namespace brac;
 #include <bricabrac/Shader/LoadShaders.h>
 
 struct Controller::Members {
-    std::unique_ptr<Game> game;
+    std::shared_ptr<Game> game;
     float angle = 0;
 };
 
@@ -23,34 +23,40 @@ Controller::Controller() : m{new Controller::Members{}} {
 Controller::~Controller() { }
 
 void Controller::newGame() {
-    m->game.reset(new Game);
+    m->game = std::make_shared<Game>();
 
     // TODO: Announce achievements.
 
-    m->game->scored.connect([=](size_t score) {
+    m->game->bounced += [](Character const & character, vec2 const & impulse) {
+        // TODO: Bounce noise
+    };
+    m->game->scored += [=]() {
+        size_t score = m->game->score();
         if (score <= 25) {
             brag::score25(4 * score, []{});
         }
         if (score <= 100) {
             brag::score100(score, []{});
         }
-    });
+    };
 
-    m->game->n_for_n.connect([=](size_t n){
+    m->game->n_for_n += [=](size_t n){
         switch (n) {
             case 2: brag::twofortwo(100, []{}); break;
             case 3: brag::hattrick(100, []{}); break;
             case 4: brag::hattrick2(100, []{}); break;
         }
-    });
+    };
 
-    m->game->sharpshot.connect([=]{
+    m->game->sharpshot += [=]{
         brag::sharpshot(100, []{});
-    });
+    };
 }
 
 void Controller::onUpdate(float dt) {
-    m->game->update(dt);
+    if (!m->game->update(dt)) {
+        newGame();
+    }
     m->angle += dt;
 }
 
@@ -67,7 +73,8 @@ void Controller::onDraw() {
 
     SpriteProgram::draw(atlas.hoop[m->game->hoop_state()], pmv() * mat4::translate({0, 5.5, 0}));
 
-    if (m->game->state() == Game::State::stopped) {
+    // This currently does nothing because a new game starts immediately after a game ends.
+    if (!*m->game) {
         SpriteProgram::drawText(std::to_string(m->game->score()), scorefont.glyphs, TextAlign::right,
                                 pmv() * mat4::translate({0, 0, 0}));
     }

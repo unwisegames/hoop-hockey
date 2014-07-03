@@ -26,8 +26,8 @@ struct CharacterImpl : BodyShapes<Character> {
 };
 
 struct PlatformImpl : public BodyShapes<Platform> {
-    PlatformImpl(vec2 const & pos)
-    : BodyShapes{newBody(M_PLATFORM, INFINITY, pos), newCircleShape(1), CP_NO_GROUP, l_play}
+    PlatformImpl(vec2 const & pos, float radius)
+    : BodyShapes{newBody(M_PLATFORM, INFINITY, pos), newCircleShape(radius), CP_NO_GROUP, l_play}
     {
         setForce({0, 30}); // Antigravity
         
@@ -55,7 +55,6 @@ struct Game::Members : GameImpl<CharacterImpl, PlatformImpl, BarrierImpl> {
     ShapePtr worldBox{sensor(boxShape(30, 30, {0, 0}, 0), ct_universe)};
     ShapePtr walls[3], hoop[2];
     ShapePtr dunk{sensor(segmentShape({-1, 6}, {1, 6}), ct_dunk)};
-    Game::State state = playing;
     size_t score = 0;
     size_t n_for_n = 0;
     bool touched_sides = false;
@@ -95,6 +94,12 @@ Game::Game() : m{new Members} {
         m->actors<BarrierImpl>().emplace(world, hinge, 0.5f - i);
     }
 
+    m->onPostSolve([=](CharacterImpl & character, PlatformImpl &, cpArbiter * arb) {
+        m->whenSpaceUnlocked([=, &character]{
+            bounced(character, to_vec2(cpArbiterTotalImpulseWithFriction(arb)));
+        }, arb);
+    });
+
     m->onSeparate([=](CharacterImpl &, PlatformImpl &) {
         if (m->n_for_n % 2 != 0) {
             m->n_for_n = 0;
@@ -105,16 +110,13 @@ Game::Game() : m{new Members} {
     });
 
     m->onSeparate([=](CharacterImpl & character, NoActor<ct_universe> &) {
-        m->removeWhenSpaceUnlocked(character);
-        createCharacter();
-        m->score = 0;
-        m->hoop_state = hoop_off;
-        //end();
+        end();
     });
 
     m->onSeparate([=](CharacterImpl & character, NoActor<ct_dunk> &, cpArbiter * arb) {
         if (character.vel().y < 0) {
-            scored(++m->score);
+            ++m->score;
+            scored();
             m->hoop_state = hoop_on;
             if (++m->n_for_n > 2) {
                 n_for_n(m->n_for_n / 2);
@@ -122,7 +124,6 @@ Game::Game() : m{new Members} {
             if (!m->touched_sides) {
                 sharpshot();
             }
-            //std::cerr << "Scored " + std::to_string(m->score) + "\n";
         }
     });
 
@@ -135,24 +136,17 @@ Game::~Game() { }
 
 size_t Game::score() const { return m->score; }
 
-Game::State Game::state() const { return m->state; }
-
 Game::HoopState Game::hoop_state() const { return m->hoop_state; }
-
-void Game::end() {
-    m->state = stopped;
-    ended(score());
-}
 
 std::unique_ptr<TouchHandler> Game::fingerTouch(vec2 const & p, float radius) {
     struct BounceTouchHandler : TouchHandler {
-        Game & self;
+        std::weak_ptr<Game> weak_self;
         PlatformImpl & platform;
         ConstraintPtr finger[2];
 
-        BounceTouchHandler(Game & self, vec2 const & p)
-        : self{self}
-        , platform{self.m->actors<PlatformImpl>().emplace(p)}
+        BounceTouchHandler(Game & self, vec2 const & p, float radius)
+        : weak_self{self.shared_from_this()}
+        , platform{self.m->actors<PlatformImpl>().emplace(p, radius)}
         {
             cpBody * world = self.m->spaceTime.staticBody;
 
@@ -170,7 +164,9 @@ std::unique_ptr<TouchHandler> Game::fingerTouch(vec2 const & p, float radius) {
         }
 
         ~BounceTouchHandler() {
-            self.m->removeWhenSpaceUnlocked(*self.m->actors<PlatformImpl>().begin());
+            if (auto self = weak_self.lock()) {
+                self->m->removeWhenSpaceUnlocked(*self->m->actors<PlatformImpl>().begin());
+            }
         }
 
         virtual void moved(vec2 const & p, bool) {
@@ -182,7 +178,7 @@ std::unique_ptr<TouchHandler> Game::fingerTouch(vec2 const & p, float radius) {
             cpDampedSpringSetRestLength(&*finger[1], length(p - vec2{0, 1000}));
         }
     };
-    return std::unique_ptr<TouchHandler>{new BounceTouchHandler{*this, p}};
+    return std::unique_ptr<TouchHandler>{new BounceTouchHandler{*this, p, 0.8f + radius}};
 }
 
 void Game::updated(float dt) {
