@@ -1,5 +1,6 @@
 #include "Game.h"
 #include "atlas.sprites.h"
+#include "background.sprites.h"
 
 #include <bricabrac/Game/GameActorImpl.h>
 #include <bricabrac/Game/Timer.h>
@@ -72,10 +73,11 @@ Game::Game() : m{new Members} {
 
     createCharacter();
 
+    float hh = 0.5 * background.bg.size().y;
     vec2 wallVerts[3][2] = {
         {{-6, -30}, {-6, 30}},
         {{ 6, -30}, { 6, 30}},
-        {{-6,  10}, { 6, 10}},
+        {{-6,  hh}, { 6, hh}},
     };
     for (int i = 0; i < 3; ++i) {
         auto & wall = m->walls[i] = m->segmentShape(wallVerts[i][0], wallVerts[i][1]);
@@ -181,8 +183,5 @@ std::unique_ptr<TouchHandler> Game::fingerTouch(vec2 const & p, float radius) {
     return std::unique_ptr<TouchHandler>{new BounceTouchHandler{*this, p, 0.8f + radius}};
 }
 
-void Game::updated(float dt) {
-    m->update(dt);
-}
-
+void Game::updated(float dt) { m->update(dt); }
 void Game::getActors(size_t actorId, void * buf) const { m->getActorsForController(actorId, buf); }
