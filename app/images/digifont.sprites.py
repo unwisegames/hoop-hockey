@@ -4,6 +4,6 @@ image('digifont.xcf')
 scale(20)
 
 sprites(glyphs=font(ur'''
-    1234567890M''',
+    1234567890MPT''',
     baselines=guides()['horizontal']
 ))

@@ -19,5 +19,6 @@ sprites(
     hoop=[
         floodfill((4.5, 9.3), scale=12, origin='centroid'),
         floodfill((8.5, 9.2), scale=12, origin='centroid')
-    ]
+    ],
+    threeline=floodfill((6, 10.5), scale=12.36, origin='centroid')
 )

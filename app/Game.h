@@ -24,6 +24,7 @@ public:
 
     size_t score() const;
     HoopState hoop_state() const;
+    float three_line_y() const;
     
     virtual std::unique_ptr<brac::TouchHandler> fingerTouch(brac::vec2 const & p, float radius) override;
 

@@ -9,6 +9,7 @@
 constexpr float START_HEIGHT = 9;
 constexpr float GRAVITY = -30;
 constexpr float M_PLATFORM = 100;
+constexpr int   BASE_SCORE = 2;
 
 using namespace brac;
 
@@ -53,6 +54,8 @@ struct BarrierImpl : public BodyShapes<Barrier> {
 };
 
 struct Game::Members : GameImpl<CharacterImpl, PlatformImpl, BarrierImpl> {
+    float const THREE_LINE_Y = 0;
+    
     ShapePtr worldBox{sensor(boxShape(30, 30, {0, 0}, 0), ct_universe)};
     ShapePtr walls[3], hoop[2];
     ShapePtr dunk{sensor(segmentShape({-1, 6}, {1, 6}), ct_dunk)};
@@ -60,6 +63,7 @@ struct Game::Members : GameImpl<CharacterImpl, PlatformImpl, BarrierImpl> {
     size_t n_for_n = 0;
     bool touched_sides = false;
     Game::HoopState hoop_state = hoop_off;
+    size_t score_modifier = 0;
 };
 
 Game::Game() : m{new Members} {
@@ -102,13 +106,17 @@ Game::Game() : m{new Members} {
         }, arb);
     });
 
-    m->onSeparate([=](CharacterImpl &, PlatformImpl &) {
+    m->onSeparate([=](CharacterImpl & character, PlatformImpl &) {
         if (m->n_for_n % 2 != 0) {
             m->n_for_n = 0;
         }
         ++m->n_for_n;
         m->touched_sides = false;
         m->hoop_state = hoop_off;
+        m->score_modifier = 0;
+        if(character.pos().y < m->THREE_LINE_Y) {
+            m->score_modifier+=1; // 3 pointer
+        }
     });
 
     m->onSeparate([=](CharacterImpl & character, NoActor<ct_universe> &) {
@@ -117,7 +125,7 @@ Game::Game() : m{new Members} {
 
     m->onSeparate([=](CharacterImpl & character, NoActor<ct_dunk> &, cpArbiter * arb) {
         if (character.vel().y < 0) {
-            ++m->score;
+            m->score+=(BASE_SCORE + m->score_modifier);
             scored();
             m->hoop_state = hoop_on;
             if (++m->n_for_n > 2) {
@@ -139,6 +147,7 @@ Game::~Game() { }
 size_t Game::score() const { return m->score; }
 
 Game::HoopState Game::hoop_state() const { return m->hoop_state; }
+float Game::three_line_y() const { return m->THREE_LINE_Y; }
 
 std::unique_ptr<TouchHandler> Game::fingerTouch(vec2 const & p, float radius) {
     struct BounceTouchHandler : TouchHandler {
