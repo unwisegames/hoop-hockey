@@ -4,6 +4,8 @@
 #include <bricabrac/Game/GameActor.h>
 #include <bricabrac/Utility/Signal.h>
 
+constexpr float THREE_LINE_Y = 0;
+
 struct Character : brac::Actor { enum State { neutral, happy, sad, excited }; };
 struct Platform : brac::Actor { };
 struct Barrier : brac::Actor { };
@@ -24,7 +26,6 @@ public:
 
     size_t score() const;
     HoopState hoop_state() const;
-    float three_line_y() const;
     
     virtual std::unique_ptr<brac::TouchHandler> fingerTouch(brac::vec2 const & p, float radius) override;
 

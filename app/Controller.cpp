@@ -69,8 +69,8 @@ void Controller::onDraw() {
     SpriteProgram::drawText(std::to_string(m->game->score()), scorefont.glyphs, TextAlign::right,
                             pmv() * mat4::translate({1.25, 8.7, 0}));
     
-    SpriteProgram::draw(atlas.threeline, pmv() * mat4::translate({0, m->game->three_line_y(), 0}));
-    SpriteProgram::drawText("3PT", digifont.glyphs, TextAlign::right, pmv() * mat4::translate({5.3, (float)m->game->three_line_y()+(float)-0.65, 0}) * mat4::scale(0.2));
+    SpriteProgram::draw(atlas.threeline, pmv() * mat4::translate({0, THREE_LINE_Y, 0}));
+    SpriteProgram::drawText("3PT", digifont.glyphs, TextAlign::right, pmv() * mat4::translate({5.3, THREE_LINE_Y-0.65, 0}) * mat4::scale(0.2));
 
     //SpriteProgram::draw(m->game->actors<Platform>   (), pmv());
     SpriteProgram::draw(m->game->actors<Character>  (), pmv());
