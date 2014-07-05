@@ -7,6 +7,8 @@ sprites(glyphs=font(ur'''
     1234567890A
     BCDEFGHIJKL
     MNOPQRSTUVW
-    XYZ''',
-    baselines=guides()['horizontal']
+    XYZ
+    ''',
+    combine=[('N', 2), ('V',2), ('X',2)],
+    baselines=guides()['horizontal'],
 ))
