@@ -5,6 +5,7 @@
 #include <bricabrac/Game/GameActorImpl.h>
 #include <bricabrac/Game/Timer.h>
 #include <bricabrac/Math/MathUtil.h>
+#include <bricabrac/Math/Random.h>
 
 constexpr float GRAVITY = -30;
 constexpr float M_PLATFORM = 100;
@@ -80,16 +81,14 @@ Game::Game() : m{new Members} {
     m->setGravity({0, GRAVITY});
 
     auto createCharacter = [=]{
-        auto randFloat = [=] (float range, float offset) {
-            return static_cast <float> (rand()) / static_cast <float> (RAND_MAX/range) + offset;
-        };
+        vec2 v;
+        do {
+            v = {rand<float>(-5, 5), rand<float>(2, 10)};
+        } while (-3 < v.x && v.x < 3 && v.y > 4);
 
-        float y = randFloat(8.0f, 2.0f);
-        float x = y < 4 ? randFloat(10.0f, -5.0f) : randFloat(2.0f, 0.0f) < 1 ? randFloat(2.0f, 3.0f) : randFloat(2.0f, -5.0f);
-
-        auto & d = m->actors<DoorImpl>().emplace(vec2{x, y});
-        delay(1, [=]{ m->actors<CharacterImpl>().emplace(0, vec2{x, y}); });
-        delay(2, [=, &d]{ m->removeWhenSpaceUnlocked(d); }).cancel(destroyed);
+        auto & d = m->actors<DoorImpl>().emplace(v);
+        delay(1, [=]{ m->actors<CharacterImpl>().emplace(0, v); }).cancel(destroyed);
+        delay(2, [=, &d]{ m->removeWhenSpaceUnlocked(d); }).cancel(d.destroyed);
     };
 
     createCharacter();
