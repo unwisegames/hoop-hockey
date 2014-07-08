@@ -6,7 +6,6 @@
 #include <bricabrac/Game/Timer.h>
 #include <bricabrac/Math/MathUtil.h>
 
-constexpr float START_HEIGHT = 9;
 constexpr float GRAVITY = -30;
 constexpr float M_PLATFORM = 100;
 constexpr int   BASE_SCORE = 2;
@@ -23,7 +22,12 @@ struct CharacterImpl : BodyShapes<Character> {
     CharacterImpl(int personality, vec2 const & pos)
     : BodyShapes{newBody(1, INFINITY, pos), atlas.characters[personality][0], CP_NO_GROUP, l_play | l_fixtures}
     {
+        //setForce({0, 30});
         for (auto & shape : shapes()) cpShapeSetElasticity(&*shape, 1);
+    }
+    
+    void drop() {
+        setForce({0, 0});
     }
 };
 
@@ -53,7 +57,13 @@ struct BarrierImpl : public BodyShapes<Barrier> {
     }
 };
 
-struct Game::Members : GameImpl<CharacterImpl, PlatformImpl, BarrierImpl> {
+struct DoorImpl : public BodyShapes<Door> {
+    DoorImpl(vec2 const & pos)
+    : BodyShapes{newStaticBody(pos), sensor(atlas.door)}
+    { }
+};
+
+struct Game::Members : GameImpl<CharacterImpl, PlatformImpl, BarrierImpl, DoorImpl> {
     ShapePtr worldBox{sensor(boxShape(30, 30, {0, 0}, 0), ct_universe)};
     ShapePtr walls[3], hoop[2];
     ShapePtr dunk{sensor(segmentShape({-1, 6}, {1, 6}), ct_dunk)};
@@ -70,7 +80,16 @@ Game::Game() : m{new Members} {
     m->setGravity({0, GRAVITY});
 
     auto createCharacter = [=]{
-        m->actors<CharacterImpl>().emplace(0, vec2{-4, START_HEIGHT});
+        auto randFloat = [=] (float range, float offset) {
+            return static_cast <float> (rand()) / static_cast <float> (RAND_MAX/range) + offset;
+        };
+
+        float y = randFloat(8.0f, 2.0f);
+        float x = y < 4 ? randFloat(10.0f, -5.0f) : randFloat(2.0f, 0.0f) < 1 ? randFloat(2.0f, 3.0f) : randFloat(2.0f, -5.0f);
+
+        auto & d = m->actors<DoorImpl>().emplace(vec2{x, y});
+        delay(1, [=]{ m->actors<CharacterImpl>().emplace(0, vec2{x, y}); });
+        delay(2, [=, &d]{ m->removeWhenSpaceUnlocked(d); }).cancel(destroyed);
     };
 
     createCharacter();

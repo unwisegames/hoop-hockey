@@ -72,6 +72,8 @@ void Controller::onDraw() {
     SpriteProgram::draw(atlas.threeline, pmv() * mat4::translate({0, THREE_LINE_Y, 0}));
     SpriteProgram::drawText("3PT", digifont.glyphs, TextAlign::right, pmv() * mat4::translate({5.3, THREE_LINE_Y-0.65, 0}) * mat4::scale(0.2));
 
+    SpriteProgram::draw(m->game->actors<Door>       (), pmv());
+
     //SpriteProgram::draw(m->game->actors<Platform>   (), pmv());
     SpriteProgram::draw(m->game->actors<Character>  (), pmv());
 
