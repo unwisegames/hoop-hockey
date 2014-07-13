@@ -20,8 +20,8 @@ sprites(
     platform=floodfill((4.5, 6.5), scale=20),
     scoreboard=floodfill((8, 7), scale=20),
     hoop=[
-        floodfill((4.5, 9.3), scale=12, origin='centroid'),
-        floodfill((8.5, 9.2), scale=12, origin='centroid')
+        floodfill((4.5, 8), scale=11, origin='centroid'),
+        floodfill((8.5, 8), scale=11, origin='centroid')
     ],
     threeline=floodfill((6, 10.5), scale=12.36, origin='centroid'),
     door=[
@@ -39,5 +39,5 @@ sprites(
             (door(1, 5), 0.15),
         )
     ],
-    ball=floodfill((11, 9), n=20)
+    ball=floodfill((11, 9), n=30)
 )

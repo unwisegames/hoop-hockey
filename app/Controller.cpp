@@ -77,7 +77,7 @@ void Controller::onDraw() {
     //SpriteProgram::draw(m->game->actors<Platform>   (), pmv());
     SpriteProgram::draw(m->game->actors<Character>  (), pmv());
 
-    SpriteProgram::draw(atlas.hoop[m->game->hoop_state()], pmv() * mat4::translate({0, 5.5, 0}));
+    SpriteProgram::draw(atlas.hoop[m->game->hoop_state()], pmv() * mat4::translate({0, 5.3, 0}));
 
     // This currently does nothing because a new game starts immediately after a game ends.
     if (!*m->game) {
