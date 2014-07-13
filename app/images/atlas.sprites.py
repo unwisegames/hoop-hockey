@@ -10,13 +10,6 @@ def door(X, Y):
     return floodfill((X, Y), scale=8, origin='centroid')
 
 sprites(
-    characters=[
-        character(0, 0),
-        character(1, 0),
-        character(2, 0),
-        character(3, 0),
-        character(0, 2),
-    ],
     platform=floodfill((4.5, 6.5), scale=20),
     scoreboard=floodfill((8, 7), scale=20),
     hoop=[
@@ -39,5 +32,6 @@ sprites(
             (door(1, 5), 0.15),
         )
     ],
-    ball=floodfill((11, 9), n=30)
+    ball=floodfill((11, 9), n=30),
+    glow=floodfill((2.5, 1.5), scale=8, origin='center')
 )

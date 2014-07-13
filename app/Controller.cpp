@@ -74,7 +74,7 @@ void Controller::onDraw() {
 
     SpriteProgram::draw(m->game->actors<Door>       (), pmv());
 
-    //SpriteProgram::draw(m->game->actors<Platform>   (), pmv());
+    SpriteProgram::draw(m->game->actors<Platform>   (), pmv());
     SpriteProgram::draw(m->game->actors<Character>  (), pmv());
 
     SpriteProgram::draw(atlas.hoop[m->game->hoop_state()], pmv() * mat4::translate({0, 5.3, 0}));

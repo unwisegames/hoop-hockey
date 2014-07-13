@@ -34,10 +34,15 @@ struct CharacterImpl : BodyShapes<Character> {
 };
 
 struct PlatformImpl : public BodyShapes<Platform> {
+    ShapePtr glow;
+    
     PlatformImpl(vec2 const & pos, float radius)
-    : BodyShapes{newBody(M_PLATFORM, INFINITY, pos), newCircleShape(radius), CP_NO_GROUP, l_play}
+    : BodyShapes{newBody(M_PLATFORM, INFINITY, pos), sensor(atlas.glow), CP_NO_GROUP, l_play}
+//    : BodyShapes{newBody(M_PLATFORM, INFINITY, pos), newCircleShape(radius), CP_NO_GROUP, l_play}
     {
         setForce({0, 30}); // Antigravity
+        
+        glow = newCircleShape(radius, {0, 0})(body());
         
         for (auto & shape : shapes()) {
             cpShapeSetElasticity(&*shape, 0.3);
