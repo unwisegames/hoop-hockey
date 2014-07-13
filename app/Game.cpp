@@ -21,7 +21,8 @@ enum CollisionType : cpCollisionType { ct_universe = 1, ct_sides, ct_dunk };
 
 struct CharacterImpl : BodyShapes<Character> {
     CharacterImpl(int personality, vec2 const & pos)
-    : BodyShapes{newBody(1, INFINITY, pos), atlas.characters[personality][0], CP_NO_GROUP, l_play | l_fixtures}
+    : BodyShapes{newBody(1, INFINITY, pos), atlas.ball, CP_NO_GROUP, l_play | l_fixtures}
+//    : BodyShapes{newBody(1, INFINITY, pos), atlas.characters[personality][0], CP_NO_GROUP, l_play | l_fixtures}
     {
         //setForce({0, 30});
         for (auto & shape : shapes()) cpShapeSetElasticity(&*shape, 1);
@@ -123,6 +124,9 @@ Game::Game() : m{new Members} {
     });
 
     m->onSeparate([=](CharacterImpl & character, PlatformImpl &) {
+        std::cerr << std::to_string(character.pos().y) + "\n";
+        //character.
+        
         if (m->n_for_n % 2 != 0) {
             m->n_for_n = 0;
         }

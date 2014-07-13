@@ -38,5 +38,6 @@ sprites(
             (door(3, 5), 0.15),
             (door(1, 5), 0.15),
         )
-    ]
+    ],
+    ball=floodfill((11, 9), n=20)
 )
