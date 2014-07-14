@@ -80,7 +80,7 @@ void Controller::onDraw() {
     SpriteProgram::draw(atlas.hoop[m->game->hoop_state()], pmv() * mat4::translate({0, 5.3, 0}));
 
     // This currently does nothing because a new game starts immediately after a game ends.
-    if (!*m->game) {
+    if (m->game->hasEnded()) {
         SpriteProgram::drawText(std::to_string(m->game->score()), scorefont.glyphs, TextAlign::right,
                                 pmv() * mat4::translate({0, 0, 0}));
     }
