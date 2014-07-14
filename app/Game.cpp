@@ -129,9 +129,6 @@ Game::Game() : m{new Members} {
     });
 
     m->onSeparate([=](CharacterImpl & character, PlatformImpl &) {
-        std::cerr << std::to_string(character.pos().y) + "\n";
-        //character.
-        
         if (m->n_for_n % 2 != 0) {
             m->n_for_n = 0;
         }
