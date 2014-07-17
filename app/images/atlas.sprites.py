@@ -33,5 +33,5 @@ sprites(
         )
     ],
     ball=floodfill((11, 9), n=30),
-    glow=floodfill((2.5, 1.5), scale=8, origin='center')
+    glow=floodfill((2.5, 1.5), scale=11, origin='center')
 )
