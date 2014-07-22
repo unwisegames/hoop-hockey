@@ -1,5 +1,5 @@
-#ifndef INCLUDED__Chickens__Controller_h
-#define INCLUDED__Chickens__Controller_h
+#ifndef INCLUDED__Bounce__Controller_h
+#define INCLUDED__Bounce__Controller_h
 
 #include "Game.h"
 
@@ -24,4 +24,4 @@ private:
     virtual std::unique_ptr<brac::TouchHandler> onTouch(brac::vec2 const & worldPos, float radius) override;
 };
 
-#endif // INCLUDED__Chickens__Controller_h
+#endif // INCLUDED__Bounce__Controller_h

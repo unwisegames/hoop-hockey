@@ -1,5 +1,5 @@
-#ifndef INCLUDED__Chickens__Game_h
-#define INCLUDED__Chickens__Game_h
+#ifndef INCLUDED__Bounce__Game_h
+#define INCLUDED__Bounce__Game_h
 
 #include <bricabrac/Game/GameActor.h>
 #include <bricabrac/Utility/Signal.h>
@@ -38,4 +38,4 @@ private:
     virtual void getActors(size_t actorId, void * buf) const override;
 };
 
-#endif // INCLUDED__Chickens__Game_h
+#endif // INCLUDED__Bounce__Game_h

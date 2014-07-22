@@ -1,5 +1,5 @@
-#ifndef INCLUDED__Chickens__GameOver_h
-#define INCLUDED__Chickens__GameOver_h
+#ifndef INCLUDED__Bounce__GameOver_h
+#define INCLUDED__Bounce__GameOver_h
 
 #include <bricabrac/Game/GameController.h>
 
@@ -20,4 +20,4 @@ private:
     virtual std::unique_ptr<brac::TouchHandler> onTouch(brac::vec2 const & worldPos, float radius) override;
 };
 
-#endif // INCLUDED__Chickens__GameOver_h
+#endif // INCLUDED__Bounce__GameOver_h
