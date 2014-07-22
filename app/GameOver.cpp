@@ -43,5 +43,5 @@ void GameOver::onResize(brac::vec2 const & size) {
 std::unique_ptr<TouchHandler> GameOver::onTouch(vec2 const & worldPos, float radius) {
     newGame();
     popController();
-    return {};
+    return TouchHandler::dummy();
 }
