@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<bank name="sounds" volumeControls="true">
+    <sound name="horn" source="horn.wav" format="adpcm" pooled="true" />
+    <sound name="open" source="dooropen.wav" format="adpcm" pooled="true" />
+    <sound name="wall" source="wall.wav" format="adpcm" pooled="true" />
+    <sound name="wall2" source="wall2.wav" format="adpcm" pooled="true" />
+    <sound name="bounce" source="bounce.wav" format="adpcm" pooled="true" />
+    <sound name="swish" source="swish.wav" format="adpcm" pooled="true"  />
+    <sound name="buzz" source="buzz.wav" format="adpcm" pooled="true"  />
+</bank>

@@ -1,6 +1,7 @@
 #include "Game.h"
 #include "atlas.sprites.h"
 #include "background.sprites.h"
+#include "overlay.sprites.h"
 
 #include <bricabrac/Game/GameActorImpl.h>
 #include <bricabrac/Game/Timer.h>
@@ -17,7 +18,7 @@ enum Group : cpGroup { gr_platform = 1, gr_ring };
 
 enum Layer : cpLayers { l_play = 1<<0, l_fixtures = 1<<1 };
 
-enum CollisionType : cpCollisionType { ct_universe = 1, ct_sides, ct_dunk };
+enum CollisionType : cpCollisionType { ct_universe = 1, ct_sides, ct_dunk, ct_wall };
 
 struct CharacterImpl : BodyShapes<Character> {
     CharacterImpl(int personality, vec2 const & pos)
@@ -70,7 +71,13 @@ struct DoorImpl : public BodyShapes<Door> {
     { }
 };
 
-struct Game::Members : GameImpl<CharacterImpl, PlatformImpl, BarrierImpl, DoorImpl> {
+struct SwishImpl : public BodyShapes<Swish> {
+    SwishImpl(vec2 const & pos)
+    : BodyShapes{newStaticBody(pos), sensor(overlay.swish)}
+    { }
+};
+
+struct Game::Members : GameImpl<CharacterImpl, PlatformImpl, BarrierImpl, DoorImpl, SwishImpl> {
     ShapePtr worldBox{sensor(boxShape(30, 30, {0, 0}, 0), ct_universe)};
     ShapePtr walls[3], hoop[2];
     ShapePtr dunk{sensor(segmentShape({-1, 6}, {1, 6}), ct_dunk)};
@@ -79,6 +86,7 @@ struct Game::Members : GameImpl<CharacterImpl, PlatformImpl, BarrierImpl, DoorIm
     bool touched_sides = false;
     Game::HoopState hoop_state = hoop_off;
     size_t score_modifier = 0;
+    std::string message = "";
 };
 
 Game::Game() : m{new Members} {
@@ -109,6 +117,7 @@ Game::Game() : m{new Members} {
         auto & wall = m->walls[i] = m->segmentShape(wallVerts[i][0], wallVerts[i][1]);
         cpShapeSetLayers(&*wall, l_fixtures);
         cpShapeSetElasticity(&*wall, 0.7);
+        cpShapeSetCollisionType(&*wall, ct_wall);
     }
     
     for (int i = 0; i < 2; ++i) {
@@ -124,21 +133,24 @@ Game::Game() : m{new Members} {
 
     m->onPostSolve([=](CharacterImpl & character, PlatformImpl &, cpArbiter * arb) {
         m->whenSpaceUnlocked([=, &character]{
-            bounced(character, to_vec2(cpArbiterTotalImpulseWithFriction(arb)));
+            if(cpArbiterIsFirstContact(arb)) {
+                bounced(character, to_vec2(cpArbiterTotalImpulseWithFriction(arb)));
+            }
         }, arb);
     });
 
     m->onSeparate([=](CharacterImpl & character, PlatformImpl &) {
+        m->message = "";
         if (m->n_for_n % 2 != 0) {
             m->n_for_n = 0;
         }
         ++m->n_for_n;
         m->touched_sides = false;
-        m->hoop_state = hoop_off;
         m->score_modifier = 0;
         if(character.pos().y < THREE_LINE_Y) {
             m->score_modifier += 1; // 3 pointer
         }
+        m->actors<SwishImpl>().clear();
     });
 
     m->onSeparate([=](CharacterImpl & character, NoActor<ct_universe> &) {
@@ -150,17 +162,32 @@ Game::Game() : m{new Members} {
             m->score += BASE_SCORE + m->score_modifier;
             scored();
             m->hoop_state = hoop_on;
+            delay(1.8, [=]{ m->hoop_state = hoop_off; }).cancel(destroyed);
             if (++m->n_for_n > 2) {
                 n_for_n(m->n_for_n / 2);
             }
+            m->actors<SwishImpl>().emplace(vec2{0, 5});
+            if (m->score == 3) {
+                m->message = "3 POINTS!";
+            }
             if (!m->touched_sides) {
+                m->message = "SWISH!";
                 sharpshot();
             }
         }
     });
 
-    m->onCollision([=](CharacterImpl &, NoActor<ct_sides> &) {
+    m->onCollision([=](CharacterImpl &, NoActor<ct_sides> &, cpArbiter * arb) {
         m->touched_sides = true;
+        if(cpArbiterIsFirstContact(arb)) {
+            touched_sides();
+        }
+    });
+
+    m->onCollision([=](CharacterImpl &, NoActor<ct_wall> &, cpArbiter * arb) {
+        if(cpArbiterIsFirstContact(arb)) {
+            bounced_wall();
+        }
     });
 }
 
@@ -169,6 +196,8 @@ Game::~Game() { }
 size_t Game::score() const { return m->score; }
 
 Game::HoopState Game::hoop_state() const { return m->hoop_state; }
+
+std::string Game::message() const { return m->message; }
 
 std::unique_ptr<TouchHandler> Game::fingerTouch(vec2 const & p, float radius) {
     struct BounceTouchHandler : TouchHandler {

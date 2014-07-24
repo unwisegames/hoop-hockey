@@ -17,6 +17,7 @@ sprites(
         floodfill((8.5, 8), scale=11, origin='centroid')
     ],
     threeline=floodfill((6, 10.5), scale=12.36, origin='centroid'),
+    shotline=floodfill((6, 11.3), scale=12.36, origin='centroid'),
     door=[
         loop(
             (door(1, 5), 0.15),

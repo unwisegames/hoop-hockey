@@ -5,11 +5,13 @@
 #include <bricabrac/Utility/Signal.h>
 
 constexpr float THREE_LINE_Y = 0;
+constexpr float SHOT_LINE_Y = 4.7;
 
 struct Character : brac::Actor { enum State { neutral, happy, sad, excited }; };
 struct Platform : brac::Actor { };
 struct Barrier : brac::Actor { };
 struct Door : brac::Actor { };
+struct Swish : brac::Actor { };
 
 class Game : public brac::GameBase, public std::enable_shared_from_this<Game> {
 public:
@@ -17,6 +19,9 @@ public:
 
     brac::Signal<void(Character const &, brac::vec2 const & impulse)> bounced;
     brac::Signal<void()> scored;
+    brac::Signal<void()> touched_sides;
+    brac::Signal<void()> door_open;
+    brac::Signal<void()> bounced_wall;
 
     // Achievement-related events
     brac::Signal<void(size_t n)> n_for_n; // n hoops from n hits
@@ -27,6 +32,7 @@ public:
 
     size_t score() const;
     HoopState hoop_state() const;
+    std::string message() const;
     
     virtual std::unique_ptr<brac::TouchHandler> fingerTouch(brac::vec2 const & p, float radius) override;
 

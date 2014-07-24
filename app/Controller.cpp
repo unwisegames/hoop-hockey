@@ -6,6 +6,10 @@
 #include "background.sprites.h"
 #include "scorefont.sprites.h"
 #include "digifont.sprites.h"
+#include "overlay.sprites.h"
+#include "menufont.sprites.h"
+#include "sounds.h"
+#include "headerfont.sprites.h"
 
 #include <iostream>
 
@@ -16,6 +20,7 @@ using namespace brac;
 
 struct Controller::Members {
     std::shared_ptr<Game> game;
+    sounds audio{0.5, 1};
     float angle = 0;
 };
 
@@ -30,9 +35,25 @@ void Controller::newGame() {
 
     // TODO: Announce achievements.
 
-    m->game->bounced += [](Character const & character, vec2 const & impulse) {
-        // TODO: Bounce noise
+    m->game->bounced += [=](Character const & character, vec2 const & impulse) {
+        //if(brac::length_sq(impulse) > 400) {
+            m->audio.bounce.play();
+        //}
     };
+    
+    m->game->door_open += [=] {
+        std::cerr << "here";
+        m->audio.open.play();
+    };
+    
+    m->game->bounced_wall += [=] {
+        m->audio.wall2.play();
+    };
+    
+    m->game->touched_sides += [=] {
+        m->audio.wall.play();
+    };
+    
     m->game->scored += [=]() {
         size_t score = m->game->score();
         if (score <= 25) {
@@ -41,6 +62,8 @@ void Controller::newGame() {
         if (score <= 100) {
             brag::score100(score, []{});
         }
+        m->audio.swish.play();
+        m->audio.horn.play();
     };
 
     m->game->n_for_n += [=](size_t n){
@@ -56,6 +79,8 @@ void Controller::newGame() {
     };
     
     m->game->ended += [=] {
+        m->audio.buzz.play();
+
         size_t score = m->game->score();
         brag::score = score;
 
@@ -82,12 +107,19 @@ void Controller::onDraw() {
     SpriteProgram::draw(atlas.threeline, pmv() * mat4::translate({0, THREE_LINE_Y, 0}));
     SpriteProgram::drawText("3PT", digifont.glyphs, TextAlign::right, pmv() * mat4::translate({5.3, THREE_LINE_Y-0.65, 0}) * mat4::scale(0.2));
 
+    //SpriteProgram::draw(atlas.shotline, pmv() * mat4::translate({0, SHOT_LINE_Y, 0}));
+
     SpriteProgram::draw(m->game->actors<Door>       (), pmv());
 
     SpriteProgram::draw(m->game->actors<Platform>   (), pmv());
     SpriteProgram::draw(m->game->actors<Character>  (), pmv());
 
     SpriteProgram::draw(atlas.hoop[m->game->hoop_state()], pmv() * mat4::translate({0, 5.3, 0}));
+
+    if(m->game->message() != "") {
+        //SpriteProgram::drawText(m->game->message(), headerfont.glyphs, TextAlign::right, pmv() * mat4::translate({0, 5, 0}));
+    };
+    SpriteProgram::draw(m->game->actors<Swish>       (), pmv());
 }
 
 void Controller::onResize(brac::vec2 const & size) {
