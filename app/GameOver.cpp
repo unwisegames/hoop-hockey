@@ -29,7 +29,7 @@ void GameOver::onDraw() {
 
         drawText(label, {-2.45, y - 0.25f}, 0.45);
         SpriteProgram::drawText(std::to_string(score_), scorefont.glyphs, 1,
-                                pmv() * mat4::translate({2.83, y - 0.5f, 0}) * mat4::scale(1.2));
+                                pmv() * mat4::translate({3.65, y - 0.5f, 0}) * mat4::scale(1.2));
     };
     drawScore(4.3, "SCORE", score_);
     drawScore(1.6, "BEST", score_);
