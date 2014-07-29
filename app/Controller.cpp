@@ -105,7 +105,7 @@ void Controller::onDraw() {
                             pmv() * mat4::translate({1.91, 8.7, 0}));
     
     SpriteProgram::draw(atlas.threeline, pmv() * mat4::translate({0, THREE_LINE_Y, 0}));
-    SpriteProgram::drawText("3PT", digifont.glyphs, 1, pmv() * mat4::translate({5.3, THREE_LINE_Y-0.65, 0}) * mat4::scale(0.2));
+    SpriteProgram::drawText("3PT", digifont.glyphs, 1, pmv() * mat4::translate({5.6, THREE_LINE_Y-0.65, 0}) * mat4::scale(0.2));
 
     //SpriteProgram::draw(atlas.shotline, pmv() * mat4::translate({0, SHOT_LINE_Y, 0}));
 
@@ -117,9 +117,9 @@ void Controller::onDraw() {
     SpriteProgram::draw(atlas.hoop[m->game->hoop_state()], pmv() * mat4::translate({0, 5.3, 0}));
 
     if(m->game->message() != "") {
-        //SpriteProgram::drawText(m->game->message(), headerfont.glyphs, TextAlign::right, pmv() * mat4::translate({0, 5, 0}));
+        SpriteProgram::drawText(m->game->message(), headerfont.glyphs, 0, pmv() * mat4::translate({0, 5, 0}));
     };
-    SpriteProgram::draw(m->game->actors<Swish>       (), pmv());
+//    SpriteProgram::draw(m->game->actors<Swish>       (), pmv());
 }
 
 void Controller::onResize(brac::vec2 const & size) {
