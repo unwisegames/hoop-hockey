@@ -25,13 +25,13 @@ struct Controller::Members {
 };
 
 Controller::Controller() : m{new Controller::Members{}} {
-    newGame();
+    newGame(MODE);
 }
 
 Controller::~Controller() { }
 
-void Controller::newGame() {
-    m->game = std::make_shared<Game>();
+void Controller::newGame(GameMode mode) {
+    m->game = std::make_shared<Game>(mode);
 
     // TODO: Announce achievements.
 
@@ -85,7 +85,7 @@ void Controller::newGame() {
         brag::score = score;
 
         auto gameOver = emplaceController<GameOver>(score);
-        gameOver->newGame += [=]{ newGame(); };
+        gameOver->newGame += [=]{ newGame(MODE); };
     };
 }
 
@@ -129,7 +129,7 @@ void Controller::onResize(brac::vec2 const & size) {
 
 std::unique_ptr<TouchHandler> Controller::onTouch(vec2 const & worldPos, float radius) {
     if (m->game->hasEnded()) {
-        newGame();
+        newGame(MODE);
     }
     return m->game->fingerTouch(worldPos, radius);
 }

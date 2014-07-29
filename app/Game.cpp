@@ -90,9 +90,11 @@ struct Game::Members : GameImpl<CharacterImpl, PlatformImpl, BarrierImpl, DoorIm
     std::string message = "";
 };
 
-Game::Game() : m{new Members} {
+Game::Game(GameMode mode) : m{new Members} {
     cpBody * world = m->spaceTime.staticBody;
 
+    std::cerr << "mode" + std::to_string(mode);
+    
     m->setGravity({0, GRAVITY});
 
     auto createCharacter = [=]{
