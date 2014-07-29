@@ -91,6 +91,7 @@ struct Game::Members : GameImpl<CharacterImpl, PlatformImpl, BarrierImpl, DoorIm
     std::string message = "";
     size_t clock = 0;
     GameMode mode;
+    std::unique_ptr<Ticker> tick;
 };
 
 Game::Game(GameMode mode) : m{new Members} {
@@ -101,13 +102,13 @@ Game::Game(GameMode mode) : m{new Members} {
 
     if (mode == m_buzzer) {
         m->clock = BUZZER_DURATION;
-        Ticker c {1, [=]{
-            std:cerr << "tick";
+        m->tick.reset(new Ticker {1, [=]{
             --m->clock;
             if (m->clock == 0) {
+                m->tick->~Ticker(); // bad?
                 end();
             }
-        }};
+        }});
     }
     
     auto createCharacter = [=]{
