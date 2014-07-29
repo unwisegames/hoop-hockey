@@ -14,7 +14,13 @@ struct Door : brac::Actor { };
 struct Swish : brac::Actor { };
 
 enum GameMode { m_arcade, m_buzzer };
-constexpr GameMode MODE = m_buzzer; // TEMPORARY: set mode at compile-time until menu available.
+const GameMode MODE = []() -> GameMode {
+    char const * buzzer_mode = getenv("BOUNCE_BUZZER_MODE");
+    if (buzzer_mode && strcmp(buzzer_mode, "YES") == 0) {
+        return m_buzzer;
+    }
+    return m_arcade;
+}();
 
 class Game : public brac::GameBase, public std::enable_shared_from_this<Game> {
 public:
