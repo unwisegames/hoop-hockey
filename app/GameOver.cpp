@@ -10,7 +10,7 @@ using namespace brac;
 #define BRICABRAC_SHADER_NAME Sprite
 #include <bricabrac/Shader/LoadShaders.h>
 
-void GameOver::onUpdate(float dt) { }
+bool GameOver::onUpdate(float dt) { return true; }
 
 void GameOver::onDraw() {
     auto drawText = [&](std::string const & text, vec2 pos, float scale) {
@@ -44,7 +44,6 @@ void GameOver::onResize(brac::vec2 const & size) {
 }
 
 std::unique_ptr<TouchHandler> GameOver::onTouch(vec2 const & worldPos, float radius) {
-    newGame();
-    popController();
+    newGame = true;
     return TouchHandler::dummy();
 }

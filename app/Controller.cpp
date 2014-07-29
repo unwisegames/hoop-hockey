@@ -22,6 +22,7 @@ struct Controller::Members {
     std::shared_ptr<Game> game;
     sounds audio{0.5, 1};
     float angle = 0;
+    std::shared_ptr<GameOver> gameOver;
 };
 
 Controller::Controller() : m{new Controller::Members{}} {
@@ -84,16 +85,22 @@ void Controller::newGame(GameMode mode) {
         size_t score = m->game->score();
         brag::score = score;
 
-        auto gameOver = emplaceController<GameOver>(score);
-        gameOver->newGame += [=]{ newGame(MODE); };
+        m->gameOver = emplaceController<GameOver>(score);
     };
 }
 
-void Controller::onUpdate(float dt) {
+bool Controller::onUpdate(float dt) {
+    if (m->gameOver && m->gameOver->newGame) {
+        m->gameOver.reset();
+        popController();
+        newGame(m->game->mode());
+        return false;
+    }
     if (!m->game->update(dt)) {
         //newGame();
     }
     m->angle += dt;
+    return true;
 }
 
 void Controller::onDraw() {
@@ -133,8 +140,5 @@ void Controller::onResize(brac::vec2 const & size) {
 }
 
 std::unique_ptr<TouchHandler> Controller::onTouch(vec2 const & worldPos, float radius) {
-    if (m->game->hasEnded()) {
-        newGame(MODE);
-    }
     return m->game->fingerTouch(worldPos, radius);
 }
