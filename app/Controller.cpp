@@ -119,6 +119,11 @@ void Controller::onDraw() {
     if(m->game->message() != "") {
         SpriteProgram::drawText(m->game->message(), headerfont.glyphs, 0, pmv() * mat4::translate({0, 5, 0}));
     };
+    
+    if(m->game->mode() == m_buzzer) {
+        SpriteProgram::drawText(std::to_string(m->game->clock()), digifont.glyphs, 1, pmv());
+    }
+        
 //    SpriteProgram::draw(m->game->actors<Swish>       (), pmv());
 }
 

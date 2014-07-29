@@ -11,6 +11,7 @@
 constexpr float GRAVITY = -30;
 constexpr float M_PLATFORM = 100;
 constexpr int   BASE_SCORE = 2;
+constexpr int   BUZZER_DURATION = 60; // seconds
 
 using namespace brac;
 
@@ -88,15 +89,27 @@ struct Game::Members : GameImpl<CharacterImpl, PlatformImpl, BarrierImpl, DoorIm
     Game::HoopState hoop_state = hoop_off;
     size_t score_modifier = 0;
     std::string message = "";
+    size_t clock = 0;
+    GameMode mode;
 };
 
 Game::Game(GameMode mode) : m{new Members} {
     cpBody * world = m->spaceTime.staticBody;
-
-    std::cerr << "mode" + std::to_string(mode);
+    m->mode = mode;
     
     m->setGravity({0, GRAVITY});
 
+    if (mode == m_buzzer) {
+        m->clock = BUZZER_DURATION;
+        Ticker c {1, [=]{
+            std:cerr << "tick";
+            --m->clock;
+            if (m->clock == 0) {
+                end();
+            }
+        }};
+    }
+    
     auto createCharacter = [=]{
         vec2 v;
         do {
@@ -158,7 +171,16 @@ Game::Game(GameMode mode) : m{new Members} {
     });
 
     m->onSeparate([=](CharacterImpl & character, NoActor<ct_universe> &) {
-        end();
+        switch (mode)
+        {
+            case m_arcade:
+                end();
+                break;
+            case m_buzzer:
+                m->removeWhenSpaceUnlocked(character);
+                createCharacter();
+                break;
+        }
     });
 
     m->onSeparate([=](CharacterImpl & character, NoActor<ct_dunk> &, cpArbiter * arb) {
@@ -171,7 +193,7 @@ Game::Game(GameMode mode) : m{new Members} {
                 n_for_n(m->n_for_n / 2);
             }
             m->actors<SwishImpl>().emplace(vec2{0, 5});
-            if (m->score == 3) {
+            if (BASE_SCORE + m->score_modifier == 3) {
                 m->message = "3 POINTS!";
             }
             if (!m->touched_sides) {
@@ -206,6 +228,10 @@ size_t Game::score() const { return m->score; }
 Game::HoopState Game::hoop_state() const { return m->hoop_state; }
 
 std::string Game::message() const { return m->message; }
+
+GameMode Game::mode() const { return m->mode; }
+
+size_t Game::clock() const { return m->clock; }
 
 std::unique_ptr<TouchHandler> Game::fingerTouch(vec2 const & p, float radius) {
     struct BounceTouchHandler : TouchHandler {

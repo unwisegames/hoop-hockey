@@ -13,8 +13,8 @@ struct Barrier : brac::Actor { };
 struct Door : brac::Actor { };
 struct Swish : brac::Actor { };
 
-enum GameMode { m_arcade = 0, m_buzzer = 1 };
-constexpr GameMode MODE = m_arcade; // TEMPORARY: set mode at compile-time until menu available.
+enum GameMode { m_arcade, m_buzzer };
+constexpr GameMode MODE = m_buzzer; // TEMPORARY: set mode at compile-time until menu available.
 
 class Game : public brac::GameBase, public std::enable_shared_from_this<Game> {
 public:
@@ -36,6 +36,8 @@ public:
     size_t score() const;
     HoopState hoop_state() const;
     std::string message() const;
+    GameMode mode() const;
+    size_t clock() const;
     
     virtual std::unique_ptr<brac::TouchHandler> fingerTouch(brac::vec2 const & p, float radius) override;
 
