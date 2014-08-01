@@ -1,5 +1,6 @@
 #include "Controller.h"
 #include "GameOver.h"
+#include "Menu.h"
 
 #include "brag.h"
 #include "atlas.sprites.h"
@@ -23,6 +24,7 @@ struct Controller::Members {
     sounds audio{0.5, 1};
     float angle = 0;
     std::shared_ptr<GameOver> gameOver;
+    std::shared_ptr<Menu> menu;
 };
 
 Controller::Controller() : m{new Controller::Members{}} {
@@ -43,7 +45,6 @@ void Controller::newGame(GameMode mode) {
     };
     
     m->game->door_open += [=] {
-        std::cerr << "here";
         m->audio.open.play();
     };
     
@@ -87,6 +88,10 @@ void Controller::newGame(GameMode mode) {
 
         m->gameOver = emplaceController<GameOver>(score);
     };
+    
+    m->game->show_menu += [=] {
+        m->menu = emplaceController<Menu>(Button(overlay.arcade, vec2(0, -1)), Button(overlay.buzzer, vec2(0, -4.5)));
+    };
 }
 
 bool Controller::onUpdate(float dt) {
@@ -94,6 +99,13 @@ bool Controller::onUpdate(float dt) {
         m->gameOver.reset();
         popController();
         newGame(m->game->mode());
+        return false;
+    }
+    if (m->menu && m->menu->newGame) {
+        auto newMode = m->menu->mode;
+        m->menu.reset();
+        popController();
+        newGame(newMode);
         return false;
     }
     if (!m->game->update(dt)) {

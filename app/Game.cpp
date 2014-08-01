@@ -11,7 +11,7 @@
 constexpr float GRAVITY = -30;
 constexpr float M_PLATFORM = 100;
 constexpr int   BASE_SCORE = 2;
-constexpr int   BUZZER_DURATION = 60; // seconds
+constexpr int   BUZZER_DURATION = 5; // seconds
 
 using namespace brac;
 
@@ -74,7 +74,7 @@ struct DoorImpl : public BodyShapes<Door> {
 
 struct SwishImpl : public BodyShapes<Swish> {
     SwishImpl(vec2 const & pos)
-    : BodyShapes{newStaticBody(pos), sensor(overlay.swish)}
+    : BodyShapes{newStaticBody(pos), sensor(overlay.box)} // overlay.swish hidden in atlas (TEMP)
     { }
 };
 
@@ -98,128 +98,138 @@ Game::Game(GameMode mode) : m{new Members} {
     cpBody * world = m->spaceTime.staticBody;
     m->mode = mode;
     
-    m->setGravity({0, GRAVITY});
+    if (mode == m_menu)
+    {
+        delay(0, [=]{ show_menu(); }).cancel(destroyed);
+    }
+    else
+    {
+        m->setGravity({0, GRAVITY});
 
-    if (mode == m_buzzer) {
-        m->clock = BUZZER_DURATION;
-        m->tick.reset(new Ticker {1, [=]{
-            --m->clock;
-            if (m->clock == 0) {
-                m->tick->~Ticker(); // bad?
-                end();
+        if (mode == m_buzzer) {
+            m->clock = BUZZER_DURATION;
+            m->tick.reset(new Ticker {1, [=]{
+                --m->clock;
+                if (m->clock == 0) {
+                    m->tick.reset();
+                    end();
+                }
+            }});
+        }
+        
+        auto createCharacter = [=]{
+            vec2 v;
+            do {
+                v = {rand<float>(-5, 5), rand<float>(2, 10)};
+            } while (-3 < v.x && v.x < 3 && v.y > 4);
+
+            auto & d = m->actors<DoorImpl>().emplace(v); door_open();
+            delay(1, [=]{ m->actors<CharacterImpl>().emplace(0, v); }).cancel(destroyed);
+            delay(2, [=, &d]{ m->removeWhenSpaceUnlocked(d); }).cancel(d.destroyed);
+        };
+
+        delay(0.1, [=] {createCharacter();}).cancel(destroyed);
+
+        float hh = 0.5 * background.bg.size().y;
+        vec2 wallVerts[3][2] = {
+            {{-6, -30}, {-6, 30}},
+            {{ 6, -30}, { 6, 30}},
+            {{-6,  hh}, { 6, hh}},
+        };
+        for (int i = 0; i < 3; ++i) {
+            auto & wall = m->walls[i] = m->segmentShape(wallVerts[i][0], wallVerts[i][1]);
+            cpShapeSetLayers(&*wall, l_fixtures);
+            cpShapeSetElasticity(&*wall, 0.7);
+            cpShapeSetCollisionType(&*wall, ct_wall);
+        }
+        
+        for (int i = 0; i < 2; ++i) {
+            vec2 hinge{2.0f * i - 1, 6};
+            auto & hoop = m->hoop[i] = m->circleShape(0.2, hinge);
+            cpShapeSetGroup(&*hoop, gr_ring);
+            cpShapeSetLayers(&*hoop, l_fixtures);
+            cpShapeSetCollisionType(&*hoop, ct_sides);
+            cpShapeSetElasticity(&*hoop, 0.3);
+
+            m->actors<BarrierImpl>().emplace(world, hinge, 0.5f - i);
+        }
+
+        m->onPostSolve([=](CharacterImpl & character, PlatformImpl &, cpArbiter * arb) {
+            m->whenSpaceUnlocked([=, &character]{
+                if(cpArbiterIsFirstContact(arb)) {
+                    bounced(character, to_vec2(cpArbiterTotalImpulseWithFriction(arb)));
+                }
+            }, arb);
+        });
+
+        m->onSeparate([=](CharacterImpl & character, PlatformImpl &) {
+            m->message = "";
+            if (m->n_for_n % 2 != 0) {
+                m->n_for_n = 0;
             }
-        }});
-    }
-    
-    auto createCharacter = [=]{
-        vec2 v;
-        do {
-            v = {rand<float>(-5, 5), rand<float>(2, 10)};
-        } while (-3 < v.x && v.x < 3 && v.y > 4);
+            ++m->n_for_n;
+            m->touched_sides = false;
+            m->bounced_wall = false;
+            m->score_modifier = 0;
+            if(character.pos().y < THREE_LINE_Y) {
+                m->score_modifier += 1; // 3 pointer
+            }
+            m->actors<SwishImpl>().clear();
+        });
 
-        auto & d = m->actors<DoorImpl>().emplace(v);
-        delay(1, [=]{ m->actors<CharacterImpl>().emplace(0, v); }).cancel(destroyed);
-        delay(2, [=, &d]{ m->removeWhenSpaceUnlocked(d); }).cancel(d.destroyed);
-    };
+        m->onSeparate([=](CharacterImpl & character, NoActor<ct_universe> &) {
+            switch (mode)
+            {
+                case m_arcade:
+                    end();
+                    break;
+                case m_buzzer:
+                    m->removeWhenSpaceUnlocked(character);
+                    createCharacter();
+                    //std::cerr << "fired";
+                    break;
+                case m_menu:
+                    break;
+            }
+        });
 
-    createCharacter();
+        m->onSeparate([=](CharacterImpl & character, NoActor<ct_dunk> &, cpArbiter * arb) {
+            if (character.vel().y < 0) {
+                m->score += BASE_SCORE + m->score_modifier;
+                scored();
+                m->hoop_state = hoop_on;
+                delay(1.8, [=]{ m->hoop_state = hoop_off; }).cancel(destroyed);
+                if (++m->n_for_n > 2) {
+                    n_for_n(m->n_for_n / 2);
+                }
+                m->actors<SwishImpl>().emplace(vec2{0, 5});
+                if (BASE_SCORE + m->score_modifier == 3) {
+                    m->message = "3 POINTS!";
+                }
+                if (!m->touched_sides) {
+                    m->message = "SWISH!";
+                    sharpshot();
+                }
+                if (!m->touched_sides && !m->bounced_wall) {
+                    m->message = "NOTHING BUT NET!";
+                }
+            }
+        });
 
-    float hh = 0.5 * background.bg.size().y;
-    vec2 wallVerts[3][2] = {
-        {{-6, -30}, {-6, 30}},
-        {{ 6, -30}, { 6, 30}},
-        {{-6,  hh}, { 6, hh}},
-    };
-    for (int i = 0; i < 3; ++i) {
-        auto & wall = m->walls[i] = m->segmentShape(wallVerts[i][0], wallVerts[i][1]);
-        cpShapeSetLayers(&*wall, l_fixtures);
-        cpShapeSetElasticity(&*wall, 0.7);
-        cpShapeSetCollisionType(&*wall, ct_wall);
-    }
-    
-    for (int i = 0; i < 2; ++i) {
-        vec2 hinge{2.0f * i - 1, 6};
-        auto & hoop = m->hoop[i] = m->circleShape(0.2, hinge);
-        cpShapeSetGroup(&*hoop, gr_ring);
-        cpShapeSetLayers(&*hoop, l_fixtures);
-        cpShapeSetCollisionType(&*hoop, ct_sides);
-        cpShapeSetElasticity(&*hoop, 0.3);
-
-        m->actors<BarrierImpl>().emplace(world, hinge, 0.5f - i);
-    }
-
-    m->onPostSolve([=](CharacterImpl & character, PlatformImpl &, cpArbiter * arb) {
-        m->whenSpaceUnlocked([=, &character]{
+        m->onCollision([=](CharacterImpl &, NoActor<ct_sides> &, cpArbiter * arb) {
+            m->touched_sides = true;
             if(cpArbiterIsFirstContact(arb)) {
-                bounced(character, to_vec2(cpArbiterTotalImpulseWithFriction(arb)));
+                touched_sides();
             }
-        }, arb);
-    });
+        });
 
-    m->onSeparate([=](CharacterImpl & character, PlatformImpl &) {
-        m->message = "";
-        if (m->n_for_n % 2 != 0) {
-            m->n_for_n = 0;
-        }
-        ++m->n_for_n;
-        m->touched_sides = false;
-        m->bounced_wall = false;
-        m->score_modifier = 0;
-        if(character.pos().y < THREE_LINE_Y) {
-            m->score_modifier += 1; // 3 pointer
-        }
-        m->actors<SwishImpl>().clear();
-    });
-
-    m->onSeparate([=](CharacterImpl & character, NoActor<ct_universe> &) {
-        switch (mode)
-        {
-            case m_arcade:
-                end();
-                break;
-            case m_buzzer:
-                m->removeWhenSpaceUnlocked(character);
-                createCharacter();
-                break;
-        }
-    });
-
-    m->onSeparate([=](CharacterImpl & character, NoActor<ct_dunk> &, cpArbiter * arb) {
-        if (character.vel().y < 0) {
-            m->score += BASE_SCORE + m->score_modifier;
-            scored();
-            m->hoop_state = hoop_on;
-            delay(1.8, [=]{ m->hoop_state = hoop_off; }).cancel(destroyed);
-            if (++m->n_for_n > 2) {
-                n_for_n(m->n_for_n / 2);
+        m->onCollision([=](CharacterImpl &, NoActor<ct_wall> &, cpArbiter * arb) {
+            m->bounced_wall = true;
+            if(cpArbiterIsFirstContact(arb)) {
+                bounced_wall();
             }
-            m->actors<SwishImpl>().emplace(vec2{0, 5});
-            if (BASE_SCORE + m->score_modifier == 3) {
-                m->message = "3 POINTS!";
-            }
-            if (!m->touched_sides) {
-                m->message = "SWISH!";
-                sharpshot();
-            }
-            if (!m->touched_sides && !m->bounced_wall) {
-                m->message = "NOTHING BUT NET!";
-            }
-        }
-    });
-
-    m->onCollision([=](CharacterImpl &, NoActor<ct_sides> &, cpArbiter * arb) {
-        m->touched_sides = true;
-        if(cpArbiterIsFirstContact(arb)) {
-            touched_sides();
-        }
-    });
-
-    m->onCollision([=](CharacterImpl &, NoActor<ct_wall> &, cpArbiter * arb) {
-        m->bounced_wall = true;
-        if(cpArbiterIsFirstContact(arb)) {
-            bounced_wall();
-        }
-    });
+        });
+    }
 }
 
 Game::~Game() { }

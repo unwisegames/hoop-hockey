@@ -7,5 +7,9 @@ sprites(
     window=floodfill((9, 5), scale=20, origin='centroid'),
     box=floodfill((2.6, 4), origin='centroid'),
     score=floodfill((4.5, 1)),
-    swish=floodfill((3, 6))
+    #swish=floodfill((3, 6)),
+    title=floodfill((3, 6), origin='centroid'),
+    buzzer=floodfill((3, 10.5), scale=14, origin='centroid'),
+    arcade=floodfill((9, 10.5), scale=14, origin='centroid')
+
 )
