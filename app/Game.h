@@ -34,6 +34,7 @@ public:
     brac::Signal<void()> touched_sides;
     brac::Signal<void()> door_open;
     brac::Signal<void()> bounced_wall;
+    brac::Signal<void()> clock_beep;
 
     // Achievement-related events
     brac::Signal<void(size_t n)> n_for_n; // n hoops from n hits

@@ -11,7 +11,7 @@
 constexpr float GRAVITY = -30;
 constexpr float M_PLATFORM = 100;
 constexpr int   BASE_SCORE = 2;
-constexpr int   BUZZER_DURATION = 5; // seconds
+constexpr int   BUZZER_DURATION = 30; // seconds
 
 using namespace brac;
 
@@ -114,6 +114,8 @@ Game::Game(GameMode mode) : m{new Members} {
                 if (m->clock == 0) {
                     m->tick.reset();
                     end();
+                } else if (m->clock <= 10) {
+                    clock_beep();
                 }
             }});
         }

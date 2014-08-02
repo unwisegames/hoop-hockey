@@ -48,6 +48,10 @@ void Controller::newGame(GameMode mode) {
         m->audio.open.play();
     };
     
+    m->game->clock_beep += [=] {
+        m->audio.beep.play();
+    };
+    
     m->game->bounced_wall += [=] {
         m->audio.wall2.play();
     };
@@ -118,7 +122,12 @@ bool Controller::onUpdate(float dt) {
 void Controller::onDraw() {
     SpriteProgram::draw(background.bg, pmv());
     
-    SpriteProgram::draw(atlas.scoreboard, pmv() * mat4::scale(0.7) * mat4::translate({0, 13, 0}));
+    if(m->game->mode() == m_buzzer) {
+        SpriteProgram::draw(atlas.scoreboard[1], pmv() * mat4::scale(0.7) * mat4::translate({0, 13, 0}));
+        SpriteProgram::drawText(std::to_string(m->game->clock()), scorefont.glyphs, 1, pmv() * mat4::translate({-0.5, 8.7, 0}));
+    } else {
+        SpriteProgram::draw(atlas.scoreboard[0], pmv() * mat4::scale(0.7) * mat4::translate({0, 13, 0}));
+    }
 
     SpriteProgram::drawText(std::to_string(m->game->score()), scorefont.glyphs, 1,
                             pmv() * mat4::translate({1.91, 8.7, 0}));
@@ -139,10 +148,6 @@ void Controller::onDraw() {
         SpriteProgram::drawText(m->game->message(), headerfont.glyphs, 0, pmv() * mat4::translate({0, 5, 0}));
     };
     
-    if(m->game->mode() == m_buzzer) {
-        SpriteProgram::drawText(std::to_string(m->game->clock()), digifont.glyphs, 1, pmv());
-    }
-        
 //    SpriteProgram::draw(m->game->actors<Swish>       (), pmv());
 }
 
