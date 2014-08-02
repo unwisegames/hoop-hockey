@@ -92,6 +92,7 @@ struct Game::Members : GameImpl<CharacterImpl, PlatformImpl, BarrierImpl, DoorIm
     size_t clock = 0;
     GameMode mode;
     std::unique_ptr<Ticker> tick;
+    std::unique_ptr<CancelTimer> hoop_timer;
 };
 
 Game::Game(GameMode mode) : m{new Members} {
@@ -198,7 +199,8 @@ Game::Game(GameMode mode) : m{new Members} {
                 m->score += BASE_SCORE + m->score_modifier;
                 scored();
                 m->hoop_state = hoop_on;
-                delay(1.8, [=]{ m->hoop_state = hoop_off; }).cancel(destroyed);
+                m->hoop_timer.reset(new CancelTimer(delay(1.8, [=]{ m->hoop_state = hoop_off; })));
+                m->hoop_timer->cancel(destroyed);
                 if (++m->n_for_n > 2) {
                     n_for_n(m->n_for_n / 2);
                 }
