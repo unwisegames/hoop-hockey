@@ -55,7 +55,7 @@ private:
     struct Members;
     std::unique_ptr<Members> m;
 
-    virtual void updated(float dt) override;
+    virtual void doUpdate(float dt) override;
     virtual void getActors(size_t actorId, void * buf) const override;
 };
 

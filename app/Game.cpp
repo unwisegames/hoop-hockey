@@ -300,5 +300,6 @@ std::unique_ptr<TouchHandler> Game::fingerTouch(vec2 const & p, float radius) {
     return std::unique_ptr<TouchHandler>{new BounceTouchHandler{*this, p, 0.8f + radius}};
 }
 
-void Game::updated(float dt) { m->update(dt); }
+void Game::doUpdate(float dt) { m->update(dt); }
+
 void Game::getActors(size_t actorId, void * buf) const { m->getActorsForController(actorId, buf); }
