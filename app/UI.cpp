@@ -1,9 +1,4 @@
 #include "UI.h"
-#include "atlas.sprites.h"
-#include "background.sprites.h"
-#include "scorefont.sprites.h"
-#include "menufont.sprites.h"
-#include "overlay.sprites.h"
 
 using namespace brac;
 
