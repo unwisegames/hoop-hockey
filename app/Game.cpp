@@ -88,7 +88,7 @@ struct Game::Members : GameImpl<CharacterImpl, PlatformImpl, BarrierImpl, DoorIm
     bool bounced_wall = false;
     Game::HoopState hoop_state = hoop_off;
     size_t score_modifier = 0;
-    std::string message = "";
+    std::string alert = "";
     size_t clock = 0;
     GameMode mode;
     std::unique_ptr<Ticker> tick;
@@ -166,7 +166,7 @@ Game::Game(GameMode mode) : m{new Members} {
         });
 
         m->onSeparate([=](CharacterImpl & character, PlatformImpl &) {
-            m->message = "";
+            m->alert = "";
             if (m->n_for_n % 2 != 0) {
                 m->n_for_n = 0;
             }
@@ -189,7 +189,6 @@ Game::Game(GameMode mode) : m{new Members} {
                 case m_buzzer:
                     m->removeWhenSpaceUnlocked(character);
                     createCharacter();
-                    //std::cerr << "fired";
                     break;
                 case m_menu:
                     break;
@@ -203,19 +202,25 @@ Game::Game(GameMode mode) : m{new Members} {
                 m->hoop_state = hoop_on;
                 m->hoop_timer.reset(new CancelTimer(delay(1.8, [=]{ m->hoop_state = hoop_off; })));
                 m->hoop_timer->cancel(destroyed);
-                if (++m->n_for_n > 2) {
-                    n_for_n(m->n_for_n / 2);
-                }
-                m->actors<SwishImpl>().emplace(vec2{0, 5});
+                //m->actors<SwishImpl>().emplace(vec2{0, 5});
                 if (BASE_SCORE + m->score_modifier == 3) {
-                    m->message = "3 POINTS!";
+                    m->alert = "3 POINTS!";
                 }
                 if (!m->touched_sides) {
-                    m->message = "SWISH!";
+                    m->alert = "SWISH!";
                     sharpshot();
                 }
                 if (!m->touched_sides && !m->bounced_wall) {
-                    m->message = "NOTHING BUT NET!";
+                    m->alert = "NOTHING BUT NET!";
+                }
+                if (++m->n_for_n > 2) {
+                    n_for_n(m->n_for_n / 2);
+                    switch (m->n_for_n / 2)
+                    {
+                        case 2: m->alert = "2 IN A ROW!"; break;
+                        case 3: m->alert = "HAT TRICK!"; break;
+                        case 4: m->alert = "UNSTOPPABLE!"; break;
+                    }
                 }
             }
         });
@@ -242,7 +247,7 @@ size_t Game::score() const { return m->score; }
 
 Game::HoopState Game::hoop_state() const { return m->hoop_state; }
 
-std::string Game::message() const { return m->message; }
+std::string Game::alert() const { return m->alert; }
 
 GameMode Game::mode() const { return m->mode; }
 

@@ -147,8 +147,8 @@ void Controller::onDraw() {
 
     SpriteProgram::draw(atlas.hoop[m->game->hoop_state()], pmv() * mat4::translate({0, 5.3, 0}));
 
-    if(m->game->message() != "") {
-        SpriteProgram::drawText(m->game->message(), headerfont.glyphs, 0, pmv() * mat4::translate({0, 5, 0}));
+    if(m->game->alert() != "") {
+        SpriteProgram::drawText(m->game->alert(), headerfont.glyphs, 0, pmv() * mat4::translate({0, 5, 0}));
     };
     
 //    SpriteProgram::draw(m->game->actors<Swish>       (), pmv());

@@ -45,7 +45,7 @@ public:
 
     size_t score() const;
     HoopState hoop_state() const;
-    std::string message() const;
+    std::string alert() const;
     GameMode mode() const;
     size_t clock() const;
     
