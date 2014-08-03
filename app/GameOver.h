@@ -2,14 +2,20 @@
 #define INCLUDED__Bounce__GameOver_h
 
 #include <bricabrac/Game/GameController.h>
+#include "UI.h"
+#include "Game.h"
 
 #include <memory>
 
 class GameOver : public brac::GameController {
 public:
-    GameOver(size_t score) : score_(score) { }
+    GameOver(size_t score, GameMode m, Button r, Button e) : score_(score), mode(m), restart(r), exit(e) { }
 
     bool newGame = false;
+    GameMode mode;
+    
+    Button restart;
+    Button exit;
 
 private:
     size_t score_;

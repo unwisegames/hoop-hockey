@@ -3,20 +3,9 @@
 
 #include <bricabrac/Game/GameController.h>
 #include "Game.h"
+#include "UI.h"
 
 #include <memory>
-
-class Button {
-public:
-    Button(brac::SpriteDef s, brac::vec2 p) : sprite_(s), pos_(p) { }
-    
-    void draw(brac::mat4 pmv);
-    bool within(brac::vec2 v);
-    
-private:
-    brac::SpriteDef sprite_;
-    brac::vec2 pos_;
-};
 
 class Menu : public brac::GameController {
 public:

@@ -10,6 +10,7 @@ sprites(
     #swish=floodfill((3, 6)),
     title=floodfill((3, 6), origin='centroid'),
     buzzer=floodfill((3, 10.5), scale=14, origin='centroid'),
-    arcade=floodfill((9, 10.5), scale=14, origin='centroid')
-
+    arcade=floodfill((9, 10.5), scale=14, origin='centroid'),
+    restart=floodfill((3, 9), scale=16, origin='centroid'),
+    exit=floodfill((9, 9), scale=16, origin='centroid')
 )

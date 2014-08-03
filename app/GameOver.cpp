@@ -21,7 +21,7 @@ void GameOver::onDraw() {
 
     SpriteProgram::draw(overlay.window, pmv() * mat4::scale(1.1));
 
-    drawText("GAME OVER", {0, 7.35}, 0.5);
+    drawText("GAME OVER", {0, 6.3}, 0.5);
 
     auto drawScore = [&](float y, std::string const & label, size_t value) {
         SpriteProgram::draw(overlay.box, pmv() * mat4::translate({0, y, 0 }) * mat4::scale(1.6));
@@ -31,11 +31,11 @@ void GameOver::onDraw() {
         SpriteProgram::drawText(std::to_string(score_), scorefont.glyphs, 1,
                                 pmv() * mat4::translate({3.65, y - 0.5f, 0}) * mat4::scale(1.2));
     };
-    drawScore(4.3, "SCORE", score_);
-    drawScore(1.6, "BEST", score_);
+    drawScore(4.0, "SCORE", score_);
+    drawScore(1.7, "BEST", score_);
 
-    drawText("TAP ANYWHERE", {0, -2.4}, 0.6);
-    drawText("TO PLAY AGAIN", {0, -3.6}, 0.6);
+    restart.draw(pmv());
+    exit.draw(pmv());
 }
 
 void GameOver::onResize(brac::vec2 const & size) {
@@ -44,6 +44,12 @@ void GameOver::onResize(brac::vec2 const & size) {
 }
 
 std::unique_ptr<TouchHandler> GameOver::onTouch(vec2 const & worldPos, float radius) {
-    newGame = true;
+    if (restart.within(worldPos)) {
+        newGame = true;
+    }
+    if (exit.within(worldPos)) {
+        mode = m_menu;
+        newGame = true;
+    }
     return TouchHandler::dummy();
 }
