@@ -6,7 +6,9 @@ using namespace brac;
 #include <bricabrac/Shader/LoadShaders.h>
 
 void Button::draw(brac::mat4 pmv) {
-    SpriteProgram::draw(sprite_, pmv * mat4::translate({pos_.x, pos_.y, 0}));
+    if (!pressed) {
+        SpriteProgram::draw(sprite_, pmv * mat4::translate({pos_.x, pos_.y, 0}));
+    }
 }
 
 bool Button::within(brac::vec2 v) {

@@ -4,13 +4,15 @@
 #include <bricabrac/Game/GameController.h>
 #include "UI.h"
 #include "Game.h"
+#include "overlay.sprites.h"
 
 #include <memory>
 
 class GameOver : public brac::GameController {
 public:
-    GameOver(size_t score, GameMode m, Button r, Button e) : score_(score), mode(m), restart(r), exit(e) { }
-
+    GameOver(size_t score, GameMode m)
+    : score_(score), mode(m), restart(Button(overlay.restart, brac::vec2(0, -1.3))), exit(Button(overlay.exit, brac::vec2(0, -4.3))) { }
+    
     bool newGame = false;
     GameMode mode;
     

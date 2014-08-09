@@ -11,7 +11,7 @@
 constexpr float GRAVITY = -30;
 constexpr float M_PLATFORM = 100;
 constexpr int   BASE_SCORE = 2;
-constexpr int   BUZZER_DURATION = 30; // seconds
+constexpr int   BUZZER_DURATION = 5; // seconds
 
 using namespace brac;
 
@@ -99,6 +99,34 @@ Game::Game(GameMode mode) : m{new Members} {
     cpBody * world = m->spaceTime.staticBody;
     m->mode = mode;
     
+    auto createCharacter = [=]{
+        vec2 v;
+        do {
+            v = {rand<float>(-5, 5), rand<float>(2, 10)};
+        } while (-3 < v.x && v.x < 3 && v.y > 4);
+        
+        auto & d = m->actors<DoorImpl>().emplace(v); door_open();
+        delay(1, [=]{ m->actors<CharacterImpl>().emplace(0, v); }).cancel(destroyed);
+        delay(2, [=, &d]{ m->removeWhenSpaceUnlocked(d); }).cancel(d.destroyed);
+    };
+    
+    m->onSeparate([=](CharacterImpl & character, NoActor<ct_universe> &) {
+        switch (mode)
+        {
+            case m_arcade:
+                end();
+                break;
+            case m_buzzer:
+                if (!m->actors<CharacterImpl>().empty()) {
+                    m->removeWhenSpaceUnlocked(character);
+                    createCharacter();
+                }
+                break;
+            case m_menu:
+                break;
+        }
+    });
+    
     if (mode == m_menu)
     {
         delay(0, [=]{ show_menu(); }).cancel(destroyed);
@@ -120,17 +148,6 @@ Game::Game(GameMode mode) : m{new Members} {
             }});
         }
         
-        auto createCharacter = [=]{
-            vec2 v;
-            do {
-                v = {rand<float>(-5, 5), rand<float>(2, 10)};
-            } while (-3 < v.x && v.x < 3 && v.y > 4);
-
-            auto & d = m->actors<DoorImpl>().emplace(v); door_open();
-            delay(1, [=]{ m->actors<CharacterImpl>().emplace(0, v); }).cancel(destroyed);
-            delay(2, [=, &d]{ m->removeWhenSpaceUnlocked(d); }).cancel(d.destroyed);
-        };
-
         delay(0.1, [=] {createCharacter();}).cancel(destroyed);
 
         float hh = 0.5 * background.bg.size().y;
@@ -178,21 +195,6 @@ Game::Game(GameMode mode) : m{new Members} {
                 m->score_modifier += 1; // 3 pointer
             }
             m->actors<SwishImpl>().clear();
-        });
-
-        m->onSeparate([=](CharacterImpl & character, NoActor<ct_universe> &) {
-            switch (mode)
-            {
-                case m_arcade:
-                    end();
-                    break;
-                case m_buzzer:
-                    m->removeWhenSpaceUnlocked(character);
-                    createCharacter();
-                    break;
-                case m_menu:
-                    break;
-            }
         });
 
         m->onSeparate([=](CharacterImpl & character, NoActor<ct_dunk> &, cpArbiter * arb) {

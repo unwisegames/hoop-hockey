@@ -11,6 +11,13 @@ public:
     void draw(brac::mat4 pmv);
     bool within(brac::vec2 v);
     
+    bool pressed = false;
+    
+    //size_t i;
+    //brac::Signal<void()> clik;
+
+    //virtual void click();
+    
 private:
     brac::SpriteDef sprite_;
     brac::vec2 pos_;

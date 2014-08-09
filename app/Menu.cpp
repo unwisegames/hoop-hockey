@@ -19,6 +19,8 @@ void Menu::onDraw() {
     
     arcade.draw(pmv());
     buzzer.draw(pmv());
+    
+    //SpriteProgram::drawText("ARCADE", menufont.glyphs, 0, pmv() * mat4::translate({0, 5, 0}));
 }
 
 void Menu::onResize(brac::vec2 const & size) {
@@ -27,13 +29,48 @@ void Menu::onResize(brac::vec2 const & size) {
 }
 
 std::unique_ptr<TouchHandler> Menu::onTouch(vec2 const & worldPos, float radius) {
-    if (arcade.within(worldPos)) {
-        mode = m_arcade;
-        newGame = true;
-    }
-    if (buzzer.within(worldPos)) {
-        mode = m_buzzer;
-        newGame = true;
-    }
-    return TouchHandler::dummy();
+    struct MenuTouchHandler : TouchHandler {
+        std::weak_ptr<Menu> weak_self;
+        Button & arc;
+        Button & buz;
+        GameMode & m;
+        bool & newGame;
+        vec2 pos;
+        //brac::Signal<void()> & click;
+        
+        MenuTouchHandler(Menu & self, vec2 const & p, float radius)
+        :   arc(self.arcade),
+            buz(self.buzzer),
+            m(self.mode),
+            newGame(self.newGame),
+            pos(p)
+            //click(self.click)
+        {
+            self.arcade.pressed = self.arcade.within(p);
+            self.buzzer.pressed = self.buzzer.within(p);
+        }
+        
+        ~MenuTouchHandler() { }
+        
+        virtual void moved(vec2 const & p, bool) {
+            pos = p;
+            arc.pressed = arc.within(p);
+            buz.pressed = buz.within(p);
+        }
+        
+        virtual void ended() {
+            arc.pressed = false;
+            buz.pressed = false;
+            if (arc.within(pos)) {
+                m = m_arcade;
+                newGame = true;
+                //click();
+            }
+            if (buz.within(pos)) {
+                m = m_buzzer;
+                newGame = true;
+            }
+        }
+    };
+    return std::unique_ptr<TouchHandler>{new MenuTouchHandler{*this, worldPos, radius}};
 }
