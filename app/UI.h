@@ -3,10 +3,11 @@
 
 #include <bricabrac/Game/GameController.h>
 #include <memory>
+#include "buttons.sprites.h"
 
 class Button {
 public:
-    Button(brac::SpriteDef s, brac::vec2 p) : sprite_(s), pos_(p) { }
+    Button(brac::SpriteDef const s[], brac::vec2 p) : sprites_{s[0], s[1]}, pos_(p) { }
     
     void draw(brac::mat4 pmv);
     bool within(brac::vec2 v);
@@ -14,12 +15,12 @@ public:
     bool pressed = false;
     
     //size_t i;
-    //brac::Signal<void()> clik;
+    brac::Signal<void()> clik;
 
     //virtual void click();
     
 private:
-    brac::SpriteDef sprite_;
+    brac::SpriteDef sprites_[2]; // default/pressed
     brac::vec2 pos_;
 };
 

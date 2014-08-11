@@ -7,7 +7,6 @@
 #include "background.sprites.h"
 #include "scorefont.sprites.h"
 #include "digifont.sprites.h"
-#include "overlay.sprites.h"
 #include "menufont.sprites.h"
 #include "sounds.h"
 #include "headerfont.sprites.h"
