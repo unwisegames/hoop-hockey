@@ -36,7 +36,6 @@ std::unique_ptr<TouchHandler> Menu::onTouch(vec2 const & worldPos, float radius)
         GameMode & m;
         bool & newGame;
         vec2 pos;
-        //brac::Signal<void()> & click;
         
         MenuTouchHandler(Menu & self, vec2 const & p, float radius)
         :   arc(self.arcade),
@@ -44,7 +43,6 @@ std::unique_ptr<TouchHandler> Menu::onTouch(vec2 const & worldPos, float radius)
             m(self.mode),
             newGame(self.newGame),
             pos(p)
-            //click(self.click)
         {
             self.arcade.pressed = self.arcade.within(p);
             self.buzzer.pressed = self.buzzer.within(p);
@@ -64,11 +62,12 @@ std::unique_ptr<TouchHandler> Menu::onTouch(vec2 const & worldPos, float radius)
             if (arc.within(pos)) {
                 m = m_arcade;
                 newGame = true;
-                //click();
+                arc.click();
             }
             if (buz.within(pos)) {
                 m = m_buzzer;
                 newGame = true;
+                buz.click();
             }
         }
     };

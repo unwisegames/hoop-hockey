@@ -90,16 +90,27 @@ void Controller::newGame(GameMode mode) {
         brag::score = score;
 
         m->gameOver = emplaceController<GameOver>(score, m->game->mode());
+
+        m->gameOver->restart.click += [=] {
+            m->audio.click.play();
+        };
+        
+        m->gameOver->exit.click += [=] {
+            m->audio.click.play();
+        };
     };
     
     m->game->show_menu += [=] {
         m->menu = emplaceController<Menu>();
         
-        //m->menu->click += [=] {
-        //    m->audio.wall.play();
-        //};
+        m->menu->arcade.click += [=] {
+            m->audio.click.play();
+        };
+        
+        m->menu->buzzer.click += [=] {
+            m->audio.click.play();
+        };
     };
-    
 }
 
 bool Controller::onUpdate(float dt) {

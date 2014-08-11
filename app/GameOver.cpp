@@ -76,11 +76,12 @@ std::unique_ptr<TouchHandler> GameOver::onTouch(vec2 const & worldPos, float rad
             exi.pressed = false;
             if (res.within(pos)) {
                 newGame = true;
-                //click();
+                res.click();
             }
             if (exi.within(pos)) {
                 m = m_menu;
                 newGame = true;
+                exi.click();
             }
         }
     };

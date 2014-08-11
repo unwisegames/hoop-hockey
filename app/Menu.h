@@ -10,8 +10,6 @@
 
 class Menu : public brac::GameController {
 public:
-    //brac::Signal<void()> c;
-
     bool newGame = false;
     GameMode mode = m_menu;
     

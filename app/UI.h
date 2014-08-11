@@ -15,7 +15,7 @@ public:
     bool pressed = false;
     
     //size_t i;
-    brac::Signal<void()> clik;
+    brac::Signal<void()> click;
 
     //virtual void click();
     

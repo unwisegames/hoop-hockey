@@ -7,5 +7,6 @@
     <sound name="bounce" source="bounce.wav" format="adpcm" pooled="true" />
     <sound name="swish" source="swish.wav" format="adpcm" pooled="true"  />
     <sound name="buzz" source="buzz.wav" format="adpcm" pooled="true" />
-    <sound name="beep" source="beep.wav" format="adpcm" pooled="true"  />
+    <sound name="beep" source="beep.wav" format="adpcm" pooled="true" />
+    <sound name="click" source="touch.wav" format="adpcm" pooled="true" />
 </bank>
