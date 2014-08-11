@@ -222,6 +222,8 @@ Game::Game(GameMode mode) : m{new Members} {
                         case 2: m->alert = "2 IN A ROW!"; break;
                         case 3: m->alert = "HAT TRICK!"; break;
                         case 4: m->alert = "UNSTOPPABLE!"; break;
+                        default:
+                            m->alert = std::to_string(m->n_for_n/2) + " IN A ROW!";
                     }
                 }
             }
