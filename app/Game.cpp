@@ -93,6 +93,8 @@ struct Game::Members : GameImpl<CharacterImpl, PlatformImpl, BarrierImpl, DoorIm
     GameMode mode;
     std::unique_ptr<Ticker> tick;
     std::unique_ptr<CancelTimer> hoop_timer;
+
+    bool exiting = false;
 };
 
 Game::Game(GameMode mode) : m{new Members} {
@@ -111,6 +113,8 @@ Game::Game(GameMode mode) : m{new Members} {
     };
     
     m->onSeparate([=](CharacterImpl & character, NoActor<ct_universe> &) {
+        if (m->exiting) return;
+
         switch (mode)
         {
             case m_arcade:
@@ -245,7 +249,9 @@ Game::Game(GameMode mode) : m{new Members} {
     }
 }
 
-Game::~Game() { }
+Game::~Game() {
+    m->exiting = true;
+}
 
 size_t Game::score() const { return m->score; }
 
