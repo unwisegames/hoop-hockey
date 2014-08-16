@@ -15,10 +15,12 @@ bool Menu::onUpdate(float dt) { return true; }
 void Menu::onDraw() {
     SpriteProgram::draw(overlay.fade, pmv());
 
-    SpriteProgram::draw(overlay.title, pmv() * mat4::scale(1.8) * mat4::translate({0, 2, 0}));
+    SpriteProgram::draw(overlay.title, pmv() * mat4::scale(1.8) * mat4::translate({0, 2.5, 0}));
     
     arcade.draw(pmv());
     buzzer.draw(pmv());
+    gamecenter.draw(pmv());
+    twitter.draw(pmv());
     
     //SpriteProgram::drawText("ARCADE", menufont.glyphs, 0, pmv() * mat4::translate({0, 5, 0}));
 }
@@ -33,6 +35,8 @@ std::unique_ptr<TouchHandler> Menu::onTouch(vec2 const & worldPos, float radius)
         std::weak_ptr<Menu> weak_self;
         Button & arc;
         Button & buz;
+        Button & gam;
+        Button & twi;
         GameMode & m;
         bool & newGame;
         vec2 pos;
@@ -40,12 +44,16 @@ std::unique_ptr<TouchHandler> Menu::onTouch(vec2 const & worldPos, float radius)
         MenuTouchHandler(Menu & self, vec2 const & p, float radius)
         :   arc(self.arcade),
             buz(self.buzzer),
+            gam(self.gamecenter),
+            twi(self.twitter),
             m(self.mode),
             newGame(self.newGame),
             pos(p)
         {
             self.arcade.pressed = self.arcade.within(p);
             self.buzzer.pressed = self.buzzer.within(p);
+            self.gamecenter.pressed = self.gamecenter.within(p);
+            self.twitter.pressed = self.twitter.within(p);
         }
         
         ~MenuTouchHandler() { }
@@ -54,11 +62,15 @@ std::unique_ptr<TouchHandler> Menu::onTouch(vec2 const & worldPos, float radius)
             pos = p;
             arc.pressed = arc.within(p);
             buz.pressed = buz.within(p);
+            gam.pressed = gam.within(p);
+            twi.pressed = twi.within(p);
         }
         
         virtual void ended() {
             arc.pressed = false;
             buz.pressed = false;
+            gam.pressed = false;
+            twi.pressed = false;
             if (arc.within(pos)) {
                 m = m_arcade;
                 newGame = true;
@@ -68,6 +80,12 @@ std::unique_ptr<TouchHandler> Menu::onTouch(vec2 const & worldPos, float radius)
                 m = m_buzzer;
                 newGame = true;
                 buz.click();
+            }
+            if (gam.within(pos)) {
+                gam.click();
+            }
+            if (twi.within(pos)) {
+                twi.click();
             }
         }
     };

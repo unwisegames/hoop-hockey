@@ -7,6 +7,7 @@
 #include <bricabrac/Game/Timer.h>
 #include <bricabrac/Math/MathUtil.h>
 #include <bricabrac/Math/Random.h>
+#include <bricabrac/Logging/Logging.h>
 
 constexpr float GRAVITY = -30;
 constexpr float M_PLATFORM = 100;
@@ -141,7 +142,7 @@ Game::Game(GameMode mode) : m{new Members} {
 
         if (mode == m_buzzer) {
             m->clock = BUZZER_DURATION;
-            m->tick.reset(new Ticker {1, [=]{
+            m->tick.reset(new Ticker{1, [=]{
                 --m->clock;
                 if (m->clock == 0) {
                     m->tick.reset();
@@ -152,7 +153,7 @@ Game::Game(GameMode mode) : m{new Members} {
             }});
         }
         
-        delay(0.1, [=] {createCharacter();}).cancel(destroyed);
+        delay(0.1, [=] { createCharacter(); }).cancel(destroyed);
 
         float hh = 0.5 * background.bg.size().y;
         vec2 wallVerts[3][2] = {
@@ -187,6 +188,8 @@ Game::Game(GameMode mode) : m{new Members} {
         });
 
         m->onSeparate([=](CharacterImpl & character, PlatformImpl &) {
+            if (m->exiting) return;
+
             m->alert = "";
             if (m->n_for_n % 2 != 0) {
                 m->n_for_n = 0;
@@ -202,6 +205,8 @@ Game::Game(GameMode mode) : m{new Members} {
         });
 
         m->onSeparate([=](CharacterImpl & character, NoActor<ct_dunk> &, cpArbiter * arb) {
+            if (m->exiting) return;
+
             if (character.vel().y < 0) {
                 m->score += BASE_SCORE + m->score_modifier;
                 scored();

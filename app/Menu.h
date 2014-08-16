@@ -13,8 +13,10 @@ public:
     bool newGame = false;
     GameMode mode = m_menu;
     
-    Button arcade {buttons.arcade, {0, -1}};
-    Button buzzer {buttons.buzzer, {0, -4.5}};
+    Button arcade {buttons.arcade,          {0, 0.5}};
+    Button buzzer {buttons.buzzer,          {0, -2.5}};
+    Button gamecenter {buttons.gamecenter,  {-1.92, -5.7}};
+    Button twitter {buttons.twitter,        {1.92, -5.7}};
 
 private:
     virtual bool onUpdate(float dt) override;

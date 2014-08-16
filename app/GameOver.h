@@ -16,8 +16,8 @@ public:
     bool newGame = false;
     GameMode mode;
     
-    Button restart {buttons.restart, {0, -1.3}};
-    Button exit {buttons.exit, {0, -4.3}};
+    Button restart {buttons.restart, {0, -4.3}};
+    Button exit {buttons.exit, {0, -1.3}};
 
 private:
     size_t score_;

@@ -87,7 +87,7 @@ void Controller::newGame(GameMode mode) {
         m->audio.buzz.play();
 
         size_t score = m->game->score();
-        brag::score = score;
+        brag::arcscore = score;
 
         m->gameOver = emplaceController<GameOver>(score, m->game->mode());
 
@@ -108,6 +108,14 @@ void Controller::newGame(GameMode mode) {
         };
         
         m->menu->buzzer.click += [=] {
+            m->audio.click.play();
+        };
+
+        m->menu->gamecenter.click += [=] {
+            m->audio.click.play();
+        };
+        
+        m->menu->twitter.click += [=] {
             m->audio.click.play();
         };
     };
@@ -149,7 +157,7 @@ void Controller::onDraw() {
                             pmv() * mat4::translate({1.91, 8.7, 0}));
     
     SpriteProgram::draw(atlas.threeline, pmv() * mat4::translate({0, THREE_LINE_Y, 0}));
-    SpriteProgram::drawText("3PT", digifont.glyphs, 1, pmv() * mat4::translate({5.6, THREE_LINE_Y-0.65, 0}) * mat4::scale(0.2), 1);
+    SpriteProgram::drawText("3PT", digifont.glyphs, 1, pmv() * mat4::translate({5.6, THREE_LINE_Y-0.65, 0}) * mat4::scale(0.2), 0.3);
 
     //SpriteProgram::draw(atlas.shotline, pmv() * mat4::translate({0, SHOT_LINE_Y, 0}));
 
@@ -161,7 +169,7 @@ void Controller::onDraw() {
     SpriteProgram::draw(atlas.hoop[m->game->hoop_state()], pmv() * mat4::translate({0, 5.3, 0}));
 
     if(m->game->alert() != "") {
-        SpriteProgram::drawText(m->game->alert(), headerfont.glyphs, 0, pmv() * mat4::translate({0, 5, 0}));
+        SpriteProgram::drawText(m->game->alert(), headerfont.glyphs, 0, pmv() * mat4::translate({0, 4.6, 0}), -0.05);
     };
     
 //    SpriteProgram::draw(m->game->actors<Swish>       (), pmv());
