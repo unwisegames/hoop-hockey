@@ -10,8 +10,8 @@
 
 class GameOver : public brac::GameController {
 public:
-    GameOver(size_t score, GameMode m)
-    : score_(score), mode(m) { }
+    GameOver(GameMode m, size_t score, size_t best)
+    : mode(m), score_(score), best_(best) { }
     
     bool newGame = false;
     GameMode mode;
@@ -21,6 +21,7 @@ public:
 
 private:
     size_t score_;
+    size_t best_;
 
     virtual bool onUpdate(float dt) override;
     virtual void onDraw() override;

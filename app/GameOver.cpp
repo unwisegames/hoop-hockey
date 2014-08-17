@@ -28,11 +28,11 @@ void GameOver::onDraw() {
         SpriteProgram::draw(overlay.score, pmv() * mat4::translate({1.44, y, 0}) * mat4::scale(1.6));
 
         drawText(label, {-2.45, y - 0.25f}, 0.45);
-        SpriteProgram::drawText(std::to_string(score_), scorefont.glyphs, 1,
+        SpriteProgram::drawText(std::to_string(value), scorefont.glyphs, 1,
                                 pmv() * mat4::translate({3.65, y - 0.5f, 0}) * mat4::scale(1.2));
     };
     drawScore(4.0, "SCORE", score_);
-    drawScore(1.7, "BEST", score_);
+    drawScore(1.7, "BEST", best_);
 
     restart.draw(pmv());
     exit.draw(pmv());

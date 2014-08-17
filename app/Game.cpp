@@ -222,7 +222,11 @@ Game::Game(GameMode mode) : m{new Members} {
                     sharpshot();
                 }
                 if (!m->touched_sides && !m->bounced_wall) {
-                    m->alert = "NOTHING BUT NET!";
+                    if(BASE_SCORE + m->score_modifier == 3) {
+                        m->alert = "AMAZING!";
+                    } else {
+                        m->alert = "PERFECT!";
+                    }
                 }
                 if (++m->n_for_n > 2) {
                     n_for_n(m->n_for_n / 2);

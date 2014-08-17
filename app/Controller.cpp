@@ -26,7 +26,8 @@ struct Controller::Members {
     float angle = 0;
     std::shared_ptr<GameOver> gameOver;
     std::shared_ptr<Menu> menu;
-    Persistent<int> bestScore{"bestScore"};
+    Persistent<int> bestArcScore{"bestArcScore"};
+    Persistent<int> bestBuzScore{"bestBuzScore"};
 };
 
 Controller::Controller() : m{new Controller::Members{}} {
@@ -90,12 +91,23 @@ void Controller::newGame(GameMode mode) {
         m->audio.buzz.play();
 
         size_t score = m->game->score();
-        if (score > *m->bestScore) {
-            m->bestScore = static_cast<int>(score);
-            brag::arcscore = score;
+        switch (m->game->mode())
+        {
+            case m_arcade:
+                if (score > *m->bestArcScore) {
+                    m->bestArcScore = static_cast<int>(score);
+                    brag::arcscore = score;
+                }
+                break;
+            case m_buzzer:
+                if (score > *m->bestBuzScore) {
+                    m->bestBuzScore = static_cast<int>(score);
+                }
+                break;
+            case m_menu: break;
         }
 
-        m->gameOver = emplaceController<GameOver>(score, m->game->mode());
+        m->gameOver = emplaceController<GameOver>(m->game->mode(), score, mode == m_arcade ? *m->bestArcScore : *m->bestBuzScore);
 
         m->gameOver->restart.click += [=] {
             m->audio.click.play();
