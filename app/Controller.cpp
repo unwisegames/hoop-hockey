@@ -11,6 +11,8 @@
 #include "sounds.h"
 #include "headerfont.sprites.h"
 
+#include <bricabrac/Data/Persistent.h>
+
 #include <iostream>
 
 using namespace brac;
@@ -24,6 +26,7 @@ struct Controller::Members {
     float angle = 0;
     std::shared_ptr<GameOver> gameOver;
     std::shared_ptr<Menu> menu;
+    Persistent<int> bestScore{"bestScore"};
 };
 
 Controller::Controller() : m{new Controller::Members{}} {
@@ -87,7 +90,10 @@ void Controller::newGame(GameMode mode) {
         m->audio.buzz.play();
 
         size_t score = m->game->score();
-        brag::arcscore = score;
+        if (score > *m->bestScore) {
+            m->bestScore = static_cast<int>(score);
+            brag::arcscore = score;
+        }
 
         m->gameOver = emplaceController<GameOver>(score, m->game->mode());
 
