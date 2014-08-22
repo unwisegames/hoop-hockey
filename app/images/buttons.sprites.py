@@ -27,4 +27,8 @@ sprites(
         floodfill((1, 10), scale=13, origin='centroid'),
         floodfill((4, 10), scale=13, origin='centroid')
     ],
+    stats=[
+        floodfill((6, 10), scale=13, origin='centroid'),
+        floodfill((8, 10), scale=13, origin='centroid')
+    ],
 )

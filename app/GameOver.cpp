@@ -19,7 +19,7 @@ void GameOver::onDraw() {
 
     SpriteProgram::draw(overlay.fade, pmv());
 
-    SpriteProgram::draw(overlay.window, pmv() * mat4::scale(1.1));
+    SpriteProgram::draw(overlay.window, pmv() * mat4::scale(1.1) * mat4::translate({0, 0.2, 0}));
 
     drawText("GAME OVER", {0, 6.3}, 0.5);
 

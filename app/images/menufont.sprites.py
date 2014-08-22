@@ -7,7 +7,7 @@ sprites(glyphs=font(ur'''
     0123456789
     ABCDEFGHIJ
     KLMNOPQRS
-    TUVWXYZ
+    TUVWXYZ.
     ''',
     baselines=guides()['horizontal']
 ))

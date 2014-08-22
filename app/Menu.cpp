@@ -23,6 +23,7 @@ void Menu::onDraw() {
     buzzer.draw(pmv());
     gamecenter.draw(pmv());
     twitter.draw(pmv());
+    stats.draw(pmv());
     
     //SpriteProgram::drawText("ARCADE", menufont.glyphs, 0, pmv() * mat4::translate({0, 5, 0}));
 }
@@ -39,6 +40,7 @@ std::unique_ptr<TouchHandler> Menu::onTouch(vec2 const & worldPos, float radius)
         Button & buz;
         Button & gam;
         Button & twi;
+        Button & sta;
         GameMode & m;
         bool & newGame;
         vec2 pos;
@@ -48,6 +50,7 @@ std::unique_ptr<TouchHandler> Menu::onTouch(vec2 const & worldPos, float radius)
             buz(self.buzzer),
             gam(self.gamecenter),
             twi(self.twitter),
+            sta(self.stats),
             m(self.mode),
             newGame(self.newGame),
             pos(p)
@@ -56,6 +59,7 @@ std::unique_ptr<TouchHandler> Menu::onTouch(vec2 const & worldPos, float radius)
             self.buzzer.pressed = self.buzzer.within(p);
             self.gamecenter.pressed = self.gamecenter.within(p);
             self.twitter.pressed = self.twitter.within(p);
+            self.stats.pressed = self.stats.within(p);
         }
         
         ~MenuTouchHandler() { }
@@ -66,6 +70,7 @@ std::unique_ptr<TouchHandler> Menu::onTouch(vec2 const & worldPos, float radius)
             buz.pressed = buz.within(p);
             gam.pressed = gam.within(p);
             twi.pressed = twi.within(p);
+            sta.pressed = sta.within(p);
         }
         
         virtual void ended() {
@@ -73,6 +78,7 @@ std::unique_ptr<TouchHandler> Menu::onTouch(vec2 const & worldPos, float radius)
             buz.pressed = false;
             gam.pressed = false;
             twi.pressed = false;
+            sta.pressed = false;
             if (arc.within(pos)) {
                 m = m_arcade;
                 newGame = true;
@@ -92,6 +98,9 @@ std::unique_ptr<TouchHandler> Menu::onTouch(vec2 const & worldPos, float radius)
                 if (UrlOpener::canOpen("http://www.twitter.com/UnwiseGames")) {
                     UrlOpener::open("http://www.twitter.com/UnwiseGames");
                 }
+            }
+            if (sta.within(pos)) {
+                sta.click();
             }
         }
     };

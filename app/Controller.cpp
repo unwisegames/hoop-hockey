@@ -1,6 +1,7 @@
 #include "Controller.h"
 #include "GameOver.h"
 #include "Menu.h"
+#include "Stats.h"
 
 #include "brag.h"
 #include "atlas.sprites.h"
@@ -26,6 +27,7 @@ struct Controller::Members {
     float angle = 0;
     std::shared_ptr<GameOver> gameOver;
     std::shared_ptr<Menu> menu;
+    std::shared_ptr<Stats> stats;
     
     // Persistent data
     Persistent<int> careerArcPoints{"careerArcPoints"};
@@ -98,9 +100,9 @@ void Controller::newGame(GameMode mode) {
         m->game->alert() = "";
 
         if (m->game->mode() == m_arcade) {
-            ++*m->arcGamesPlayed;
+            m->arcGamesPlayed = ++*m->arcGamesPlayed;
         } else if (m->game->mode() == m_buzzer) {
-            ++*m->buzGamesPlayed;
+            m->buzGamesPlayed = ++*m->buzGamesPlayed;
         }
         
         size_t score = m->game->score();
@@ -167,6 +169,16 @@ void Controller::newGame(GameMode mode) {
         m->menu->twitter.click += [=] {
             m->audio.click.play();
         };
+
+        m->menu->stats.click += [=] {
+            m->audio.click.play();
+            m->stats = emplaceController<Stats>(*m->arcGamesPlayed, *m->buzGamesPlayed, *m->careerArcPoints, *m->careerBuzPoints,
+                                                *m->bestArcScore, *m->bestBuzScore);
+            
+            m->stats->exit.click += [=] {
+                m->audio.click.play();
+            };
+        };
     };
 }
 
@@ -183,6 +195,11 @@ bool Controller::onUpdate(float dt) {
         m->menu.reset();
         popController();
         newGame(newMode);
+        return false;
+    }
+    if (m->stats && m->stats->doClose) {
+        m->stats.reset();
+        popController();
         return false;
     }
     if (!m->game->update(dt)) {

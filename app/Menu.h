@@ -15,8 +15,9 @@ public:
     
     Button arcade {buttons.arcade,          {0, 0.5}};
     Button buzzer {buttons.buzzer,          {0, -2.5}};
-    Button gamecenter {buttons.gamecenter,  {-1.92, -5.7}};
-    Button twitter {buttons.twitter,        {1.92, -5.7}};
+    Button gamecenter {buttons.gamecenter,  {-3, -5.7}};
+    Button twitter {buttons.twitter,        {3, -5.7}};
+    Button stats {buttons.stats,            {0, -5.7}};
 
 private:
     virtual bool onUpdate(float dt) override;
