@@ -4,6 +4,8 @@
 #include "scorefont.sprites.h"
 #include "menufont.sprites.h"
 #include "overlay.sprites.h"
+#include <bricabrac/Game/Bragging.h>
+#include <bricabrac/Utility/UrlOpener.h>
 
 using namespace brac;
 
@@ -83,9 +85,13 @@ std::unique_ptr<TouchHandler> Menu::onTouch(vec2 const & worldPos, float radius)
             }
             if (gam.within(pos)) {
                 gam.click();
+                presentBragUI();
             }
             if (twi.within(pos)) {
                 twi.click();
+                if (UrlOpener::canOpen("http://www.twitter.com/UnwiseGames")) {
+                    UrlOpener::open("http://www.twitter.com/UnwiseGames");
+                }
             }
         }
     };

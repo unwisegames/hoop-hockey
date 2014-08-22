@@ -86,7 +86,7 @@ struct Game::Members : GameImpl<CharacterImpl, PlatformImpl, BarrierImpl, DoorIm
     size_t score = 0;
     size_t n_for_n = 0;
     bool touched_sides = false;
-    bool bounced_wall = false;
+    int bounced_walls = 0;
     Game::HoopState hoop_state = hoop_off;
     size_t score_modifier = 0;
     std::string alert = "";
@@ -196,7 +196,7 @@ Game::Game(GameMode mode) : m{new Members} {
             }
             ++m->n_for_n;
             m->touched_sides = false;
-            m->bounced_wall = false;
+            m->bounced_walls = 0;
             m->score_modifier = 0;
             if(character.pos().y < THREE_LINE_Y) {
                 m->score_modifier += 1; // 3 pointer
@@ -221,12 +221,15 @@ Game::Game(GameMode mode) : m{new Members} {
                     m->alert = "SWISH!";
                     sharpshot();
                 }
-                if (!m->touched_sides && !m->bounced_wall) {
+                if (!m->touched_sides && m->bounced_walls == 0) {
                     if(BASE_SCORE + m->score_modifier == 3) {
                         m->alert = "AMAZING!";
                     } else {
                         m->alert = "PERFECT!";
                     }
+                }
+                if (m->bounced_walls > 2) {
+                    m->alert = "PINBALL!";
                 }
                 if (++m->n_for_n > 2) {
                     n_for_n(m->n_for_n / 2);
@@ -250,7 +253,7 @@ Game::Game(GameMode mode) : m{new Members} {
         });
 
         m->onCollision([=](CharacterImpl &, NoActor<ct_wall> &, cpArbiter * arb) {
-            m->bounced_wall = true;
+            ++m->bounced_walls;
             if(cpArbiterIsFirstContact(arb)) {
                 bounced_wall();
             }

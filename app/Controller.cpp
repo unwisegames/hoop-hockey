@@ -64,13 +64,13 @@ void Controller::newGame(GameMode mode) {
     };
     
     m->game->scored += [=]() {
-        size_t score = m->game->score();
+        /*size_t score = m->game->score();
         if (score <= 25) {
             brag::score25(4 * score, []{});
         }
         if (score <= 100) {
             brag::score100(score, []{});
-        }
+        }*/
         m->audio.swish.play();
         m->audio.horn.play();
     };
@@ -89,6 +89,7 @@ void Controller::newGame(GameMode mode) {
     
     m->game->ended += [=] {
         m->audio.buzz.play();
+        m->game->alert() = "";
 
         size_t score = m->game->score();
         switch (m->game->mode())
@@ -102,9 +103,17 @@ void Controller::newGame(GameMode mode) {
             case m_buzzer:
                 if (score > *m->bestBuzScore) {
                     m->bestBuzScore = static_cast<int>(score);
+                    brag::buzscore = score;
                 }
                 break;
             case m_menu: break;
+        }
+        
+        if (score >= 25) {
+            brag::score25(100, []{});
+            if (score >= 100) {
+                brag::score100(100, []{});
+            }
         }
 
         m->gameOver = emplaceController<GameOver>(m->game->mode(), score, mode == m_arcade ? *m->bestArcScore : *m->bestBuzScore);
