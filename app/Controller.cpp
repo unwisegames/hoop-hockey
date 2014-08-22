@@ -26,8 +26,14 @@ struct Controller::Members {
     float angle = 0;
     std::shared_ptr<GameOver> gameOver;
     std::shared_ptr<Menu> menu;
+    
+    // Persistent data
+    Persistent<int> careerArcPoints{"careerArcPoints"};
+    Persistent<int> careerBuzPoints{"careerBuzPoints"};
     Persistent<int> bestArcScore{"bestArcScore"};
     Persistent<int> bestBuzScore{"bestBuzScore"};
+    Persistent<int> arcGamesPlayed{"arcGamesPlayed"};
+    Persistent<int> buzGamesPlayed{"buzGamesPlayed"};
 };
 
 Controller::Controller() : m{new Controller::Members{}} {
@@ -91,31 +97,47 @@ void Controller::newGame(GameMode mode) {
         m->audio.buzz.play();
         m->game->alert() = "";
 
-        size_t score = m->game->score();
-        switch (m->game->mode())
-        {
-            case m_arcade:
-                if (score > *m->bestArcScore) {
-                    m->bestArcScore = static_cast<int>(score);
-                    brag::arcscore = score;
-                }
-                break;
-            case m_buzzer:
-                if (score > *m->bestBuzScore) {
-                    m->bestBuzScore = static_cast<int>(score);
-                    brag::buzscore = score;
-                }
-                break;
-            case m_menu: break;
+        if (m->game->mode() == m_arcade) {
+            ++*m->arcGamesPlayed;
+        } else if (m->game->mode() == m_buzzer) {
+            ++*m->buzGamesPlayed;
         }
         
-        if (score >= 25) {
-            brag::score25(100, []{});
-            if (score >= 100) {
-                brag::score100(100, []{});
+        size_t score = m->game->score();
+        if (score > 0) {
+            switch (m->game->mode())
+            {
+                case m_arcade:
+                    if (score > *m->bestArcScore) {
+                        m->bestArcScore = static_cast<int>(score);
+                        brag::arcscore = score;
+                    }
+                    m->careerArcPoints = *m->careerArcPoints + static_cast<int>(score);
+                    break;
+                case m_buzzer:
+                    if (score > *m->bestBuzScore) {
+                        m->bestBuzScore = static_cast<int>(score);
+                        brag::buzscore = score;
+                    }
+                    m->careerBuzPoints = *m->careerBuzPoints + static_cast<int>(score);
+                    break;
+                case m_menu: break;
             }
+            
+            if (score >= 25) {
+                brag::score25(100, []{});
+                if (score >= 100) {
+                    brag::score100(100, []{});
+                }
+            }
+            
+            size_t cp = *m->careerArcPoints + *m->careerBuzPoints;
+            brag::career = cp;
+            brag::points500((cp/500)*100 > 100 ? 100 : (cp/500)*100, []{});
+            brag::points1000((cp/1000)*100 > 100 ? 100 : (cp/1000)*100, []{});
+            brag::points10000((cp/10000)*100 > 100 ? 100 : (cp/10000)*100, []{});
         }
-
+        
         m->gameOver = emplaceController<GameOver>(m->game->mode(), score, mode == m_arcade ? *m->bestArcScore : *m->bestBuzScore);
 
         m->gameOver->restart.click += [=] {
