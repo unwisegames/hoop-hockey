@@ -20,15 +20,15 @@ sprites(
         floodfill((7, 8), scale=16, origin='centroid')
     ],
     gamecenter=[
-        floodfill((10.5, 6), scale=13, origin='centroid'),
-        floodfill((10.5, 8), scale=13, origin='centroid')
+        floodfill((10.5, 6), scale=12, origin='centroid'),
+        floodfill((10.5, 8), scale=12, origin='centroid')
     ],
     twitter=[
-        floodfill((1, 10), scale=13, origin='centroid'),
-        floodfill((4, 10), scale=13, origin='centroid')
+        floodfill((1, 10), scale=12, origin='centroid'),
+        floodfill((4, 10), scale=12, origin='centroid')
     ],
     stats=[
-        floodfill((6, 10), scale=13, origin='centroid'),
-        floodfill((8, 10), scale=13, origin='centroid')
+        floodfill((6, 10), scale=12, origin='centroid'),
+        floodfill((8, 10), scale=12, origin='centroid')
     ],
 )
