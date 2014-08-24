@@ -59,6 +59,10 @@ void Controller::newGame(GameMode mode) {
         m->audio.open.play();
     };
     
+    m->game->release_ball += [=] {
+        m->audio.pop.play();
+    };
+    
     m->game->clock_beep += [=] {
         m->audio.beep.play();
     };

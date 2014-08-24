@@ -109,7 +109,7 @@ Game::Game(GameMode mode) : m{new Members} {
         } while (-3 < v.x && v.x < 3 && v.y > 4);
         
         auto & d = m->actors<DoorImpl>().emplace(v); door_open();
-        delay(1, [=]{ m->actors<CharacterImpl>().emplace(0, v); }).cancel(destroyed);
+        delay(1, [=]{ m->actors<CharacterImpl>().emplace(0, v); release_ball(); }).cancel(destroyed);
         delay(2, [=, &d]{ m->removeWhenSpaceUnlocked(d); }).cancel(d.destroyed);
     };
     

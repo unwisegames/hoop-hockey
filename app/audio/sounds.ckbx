@@ -9,4 +9,5 @@
     <sound name="buzz" source="buzz.wav" format="adpcm" pooled="true" />
     <sound name="beep" source="beep.wav" format="adpcm" pooled="true" />
     <sound name="click" source="touch.wav" format="adpcm" pooled="true" />
+    <sound name="pop" source="pop.wav" format="adpcm" pooled="true" />
 </bank>
