@@ -137,11 +137,14 @@ void Controller::newGame(GameMode mode) {
                 }
             }
             
+            auto ptPercent = [=](size_t cp, int target) {
+                return (float(cp)/target)*100 > 100 ? 100 : (float(cp)/target)*100;
+            };
             size_t cp = *m->careerArcPoints + *m->careerBuzPoints;
             brag::career = cp;
-            brag::points500((cp/500)*100 > 100 ? 100 : (cp/500)*100, []{});
-            brag::points1000((cp/1000)*100 > 100 ? 100 : (cp/1000)*100, []{});
-            brag::points10000((cp/10000)*100 > 100 ? 100 : (cp/10000)*100, []{});
+            brag::points500(ptPercent(cp, 500), []{});
+            brag::points1000(ptPercent(cp, 1000), []{});
+            brag::points10000(ptPercent(cp, 10000), []{});
         }
         
         m->gameOver = emplaceController<GameOver>(m->game->mode(), score, mode == m_arcade ? *m->bestArcScore : *m->bestBuzScore);
