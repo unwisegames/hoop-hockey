@@ -47,6 +47,9 @@ Controller::~Controller() { }
 void Controller::newGame(GameMode mode) {
     m->game = std::make_shared<Game>(mode);
 
+    m->audio.music->setLoopCount(-1);
+    mode == m_menu ? m->audio.music->play() : m->audio.music->stop();
+    
     // TODO: Announce achievements.
 
     m->game->bounced += [=](Character const & character, vec2 const & impulse) {
