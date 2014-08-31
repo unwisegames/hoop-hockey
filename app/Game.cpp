@@ -51,6 +51,10 @@ struct PlatformImpl : public BodyShapes<Platform> {
             cpShapeSetElasticity(&*shape, 0.3);
         }
     }
+
+    ~PlatformImpl() {
+        std::cerr << this << "->~PlatformImpl()\n";
+    }
 };
 
 struct BarrierImpl : public BodyShapes<Barrier> {
@@ -94,8 +98,6 @@ struct Game::Members : GameImpl<CharacterImpl, PlatformImpl, BarrierImpl, DoorIm
     GameMode mode;
     std::unique_ptr<Ticker> tick;
     std::unique_ptr<CancelTimer> hoop_timer;
-
-    bool exiting = false;
 };
 
 Game::Game(GameMode mode) : m{new Members} {
@@ -114,10 +116,7 @@ Game::Game(GameMode mode) : m{new Members} {
     };
     
     m->onSeparate([=](CharacterImpl & character, NoActor<ct_universe> &) {
-        if (m->exiting) return;
-
-        switch (mode)
-        {
+        switch (mode) {
             case m_arcade:
                 end();
                 break;
@@ -188,8 +187,6 @@ Game::Game(GameMode mode) : m{new Members} {
         });
 
         m->onSeparate([=](CharacterImpl & character, PlatformImpl & p) {
-            if (m->exiting) return;
-
             m->alert = "";
             if (m->n_for_n % 2 != 0) {
                 m->n_for_n = 0;
@@ -206,8 +203,6 @@ Game::Game(GameMode mode) : m{new Members} {
         });
 
         m->onSeparate([=](CharacterImpl & character, NoActor<ct_dunk> &, cpArbiter * arb) {
-            if (m->exiting) return;
-
             if (character.vel().y < 0) {
                 m->score += BASE_SCORE + m->score_modifier;
                 scored();
@@ -262,9 +257,7 @@ Game::Game(GameMode mode) : m{new Members} {
     }
 }
 
-Game::~Game() {
-    m->exiting = true;
-}
+Game::~Game() { }
 
 size_t Game::score() const { return m->score; }
 
