@@ -10,7 +10,7 @@ public:
     Button(brac::SpriteDef const s[], brac::vec2 p) : sprites_{s[0], s[1]}, pos_(p) { }
     
     void draw(brac::mat4 pmv);
-    bool within(brac::vec2 v);
+    bool contains(brac::vec2 v);
     
     bool pressed = false;
     

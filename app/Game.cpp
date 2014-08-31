@@ -314,8 +314,10 @@ std::unique_ptr<TouchHandler> Game::fingerTouch(vec2 const & p, float radius) {
         }
 
         void adjustSprings(vec2 const & p) {
-            cpDampedSpringSetRestLength(&*finger[0], length(p - vec2{1000, 0}));
-            cpDampedSpringSetRestLength(&*finger[1], length(p - vec2{0, 1000}));
+            if (auto self = weak_self.lock()) {
+                cpDampedSpringSetRestLength(&*finger[0], length(p - vec2{1000, 0}));
+                cpDampedSpringSetRestLength(&*finger[1], length(p - vec2{0, 1000}));
+            }
         }
     };
     return std::unique_ptr<TouchHandler>{new BounceTouchHandler{*this, p, 0.8f + radius}};

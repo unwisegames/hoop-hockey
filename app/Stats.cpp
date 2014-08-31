@@ -75,7 +75,6 @@ void Stats::onResize(brac::vec2 const & size) {
 
 std::unique_ptr<TouchHandler> Stats::onTouch(vec2 const & worldPos, float radius) {
     struct StatsTouchHandler : TouchHandler {
-        std::weak_ptr<Stats> weak_self;
         Button & exi;
         bool & doClose;
         vec2 pos;
@@ -85,19 +84,19 @@ std::unique_ptr<TouchHandler> Stats::onTouch(vec2 const & worldPos, float radius
             doClose(self.doClose),
             pos(p)
         {
-            self.exit.pressed = self.exit.within(p);
+            self.exit.pressed = self.exit.contains(p);
         }
         
         ~StatsTouchHandler() { }
         
         virtual void moved(vec2 const & p, bool) {
             pos = p;
-            exi.pressed = exi.within(p);
+            exi.pressed = exi.contains(p);
         }
         
         virtual void ended() {
             exi.pressed = false;
-            if (exi.within(pos)) {
+            if (exi.contains(pos)) {
                 doClose = true;
                 exi.click();
             }

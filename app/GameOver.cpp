@@ -44,7 +44,6 @@ void GameOver::onResize(brac::vec2 const & size) {
 
 std::unique_ptr<TouchHandler> GameOver::onTouch(vec2 const & worldPos, float radius) {
     struct GameOverTouchHandler : TouchHandler {
-        std::weak_ptr<GameOver> weak_self;
         Button & res;
         Button & exi;
         GameMode & m;
@@ -58,26 +57,26 @@ std::unique_ptr<TouchHandler> GameOver::onTouch(vec2 const & worldPos, float rad
             newGame(self.newGame),
             pos(p)
         {
-            self.restart.pressed = self.restart.within(p);
-            self.exit.pressed = self.exit.within(p);
+            self.restart.pressed = self.restart.contains(p);
+            self.exit.pressed = self.exit.contains(p);
         }
         
         ~GameOverTouchHandler() { }
         
         virtual void moved(vec2 const & p, bool) {
             pos = p;
-            res.pressed = res.within(p);
-            exi.pressed = exi.within(p);
+            res.pressed = res.contains(p);
+            exi.pressed = exi.contains(p);
         }
         
         virtual void ended() {
             res.pressed = false;
             exi.pressed = false;
-            if (res.within(pos)) {
+            if (res.contains(pos)) {
                 newGame = true;
                 res.click();
             }
-            if (exi.within(pos)) {
+            if (exi.contains(pos)) {
                 m = m_menu;
                 newGame = true;
                 exi.click();

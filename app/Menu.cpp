@@ -19,11 +19,11 @@ void Menu::onDraw() {
 
     SpriteProgram::draw(overlay.title, pmv() * mat4::translate({0, 4.5, 0}) * mat4::scale(1.8));
 
-    arcade.draw(pmv());
-    buzzer.draw(pmv());
-    gamecenter.draw(pmv());
-    twitter.draw(pmv());
-    stats.draw(pmv());
+    arcade      .draw(pmv());
+    buzzer      .draw(pmv());
+    gamecenter  .draw(pmv());
+    twitter     .draw(pmv());
+    stats       .draw(pmv());
 }
 
 void Menu::onResize(brac::vec2 const & size) {
@@ -32,72 +32,51 @@ void Menu::onResize(brac::vec2 const & size) {
 
 std::unique_ptr<TouchHandler> Menu::onTouch(vec2 const & worldPos, float radius) {
     struct MenuTouchHandler : TouchHandler {
-        std::weak_ptr<Menu> weak_self;
-        Button & arc;
-        Button & buz;
-        Button & gam;
-        Button & twi;
-        Button & sta;
+        Button * button = nullptr;
+        size_t index;
         GameMode & m;
         bool & newGame;
         vec2 pos;
 
         MenuTouchHandler(Menu & self, vec2 const & p, float radius)
-        :   arc(self.arcade),
-            buz(self.buzzer),
-            gam(self.gamecenter),
-            twi(self.twitter),
-            sta(self.stats),
-            m(self.mode),
-            newGame(self.newGame),
-            pos(p)
+        : m(self.mode)
+        , newGame(self.newGame)
+        , pos(p)
         {
-            self.arcade.pressed = self.arcade.within(p);
-            self.buzzer.pressed = self.buzzer.within(p);
-            self.gamecenter.pressed = self.gamecenter.within(p);
-            self.twitter.pressed = self.twitter.within(p);
-            self.stats.pressed = self.stats.within(p);
+            Button * buttons[] = {&self.arcade, &self.buzzer, &self.gamecenter, &self.twitter, &self.stats};
+            for (auto & b : buttons) {
+                if (b->contains(p)) {
+                    button = b;
+                    index = &b - buttons;
+                }
+            }
         }
 
         ~MenuTouchHandler() { }
 
-        virtual void moved(vec2 const & p, bool) {
+        virtual void moved(vec2 const & p, bool) override {
             pos = p;
-            arc.pressed = arc.within(p);
-            buz.pressed = buz.within(p);
-            gam.pressed = gam.within(p);
-            twi.pressed = twi.within(p);
-            sta.pressed = sta.within(p);
+            button->pressed = button->contains(p);
         }
 
-        virtual void ended() {
-            arc.pressed = false;
-            buz.pressed = false;
-            gam.pressed = false;
-            twi.pressed = false;
-            sta.pressed = false;
-            if (arc.within(pos)) {
-                m = m_arcade;
-                newGame = true;
-                arc.click();
-            }
-            if (buz.within(pos)) {
-                m = m_buzzer;
-                newGame = true;
-                buz.click();
-            }
-            if (gam.within(pos)) {
-                gam.click();
-                presentBragUI();
-            }
-            if (twi.within(pos)) {
-                twi.click();
-                if (UrlOpener::canOpen("http://www.twitter.com/UnwiseGames")) {
+        virtual void ended() override {
+            button->pressed = false;
+            if (button->contains(pos)) {
+                if (index == 0) { // arcade
+                    m = m_arcade;
+                    newGame = true;
+                } else if (index == 1) { // buzzer
+                    m = m_buzzer;
+                    newGame = true;
+                }
+
+                button->click();
+
+                if (index == 2) { // gamecenter
+                    presentBragUI();
+                } else if (index == 3) { // twitter
                     UrlOpener::open("http://www.twitter.com/UnwiseGames");
                 }
-            }
-            if (sta.within(pos)) {
-                sta.click();
             }
         }
     };
