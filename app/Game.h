@@ -28,6 +28,14 @@ class Game : public brac::GameBase, public std::enable_shared_from_this<Game> {
 public:
     enum HoopState { hoop_on = 1, hoop_off = 0 };
 
+    struct State {
+        size_t score = 0;
+        HoopState hoop_state = hoop_off;
+        std::string alert = "";
+        GameMode mode;
+        size_t clock = 0;
+    };
+
     brac::Signal<void()> show_menu;
     brac::Signal<void(Character const &, brac::vec2 const & impulse)> bounced;
     brac::Signal<void()> scored;
@@ -44,11 +52,7 @@ public:
     Game(GameMode mode);
     ~Game();
 
-    size_t score() const;
-    HoopState hoop_state() const;
-    std::string alert() const;
-    GameMode mode() const;
-    size_t clock() const;
+    State const & state() const;
     
     virtual std::unique_ptr<brac::TouchHandler> fingerTouch(brac::vec2 const & p, float radius) override;
 

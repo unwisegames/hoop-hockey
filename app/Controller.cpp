@@ -79,7 +79,7 @@ void Controller::newGame(GameMode mode) {
     };
     
     m->game->scored += [=]() {
-        /*size_t score = m->game->score();
+        /*size_t score = m->game->state().score;
         if (score <= 25) {
             brag::score25(4 * score, []{});
         }
@@ -103,19 +103,20 @@ void Controller::newGame(GameMode mode) {
     };
     
     m->game->ended += [=] {
-        m->audio.buzz.play();
-        m->game->alert() = "";
+        auto const & state = m->game->state();
+        auto mode = state.mode;
 
-        if (m->game->mode() == m_arcade) {
+        m->audio.buzz.play();
+
+        if (mode == m_arcade) {
             m->arcGamesPlayed = ++*m->arcGamesPlayed;
-        } else if (m->game->mode() == m_buzzer) {
+        } else if (mode == m_buzzer) {
             m->buzGamesPlayed = ++*m->buzGamesPlayed;
         }
         
-        size_t score = m->game->score();
+        size_t score = state.score;
         if (score > 0) {
-            switch (m->game->mode())
-            {
+            switch (state.mode) {
                 case m_arcade:
                     if (score > *m->bestArcScore) {
                         m->bestArcScore = static_cast<int>(score);
@@ -150,7 +151,7 @@ void Controller::newGame(GameMode mode) {
             brag::points10000(ptPercent(cp, 10000), []{});
         }
         
-        m->gameOver = emplaceController<GameOver>(m->game->mode(), score, mode == m_arcade ? *m->bestArcScore : *m->bestBuzScore);
+        m->gameOver = emplaceController<GameOver>(mode, score, mode == m_arcade ? *m->bestArcScore : *m->bestBuzScore);
 
         m->gameOver->restart.click += [=] {
             m->audio.click.play();
@@ -220,16 +221,18 @@ bool Controller::onUpdate(float dt) {
 }
 
 void Controller::onDraw() {
+    auto const & state = m->game->state();
+
     SpriteProgram::draw(background.bg, pmv());
     
-    if(m->game->mode() == m_buzzer) {
+    if(state.mode == m_buzzer) {
         SpriteProgram::draw(atlas.scoreboard[1], pmv() * mat4::scale(0.7) * mat4::translate({0, 13, 0}));
-        SpriteProgram::drawText(std::to_string(m->game->clock()), scorefont.glyphs, 1, pmv() * mat4::translate({-0.5, 8.7, 0}));
+        SpriteProgram::drawText(std::to_string(state.clock), scorefont.glyphs, 1, pmv() * mat4::translate({-0.5, 8.7, 0}));
     } else {
         SpriteProgram::draw(atlas.scoreboard[0], pmv() * mat4::scale(0.7) * mat4::translate({0, 13, 0}));
     }
 
-    SpriteProgram::drawText(std::to_string(m->game->score()), scorefont.glyphs, 1,
+    SpriteProgram::drawText(std::to_string(state.score), scorefont.glyphs, 1,
                             pmv() * mat4::translate({1.91, 8.7, 0}));
     
     SpriteProgram::draw(atlas.threeline, pmv() * mat4::translate({0, THREE_LINE_Y, 0}));
@@ -242,10 +245,10 @@ void Controller::onDraw() {
     SpriteProgram::draw(m->game->actors<Platform>   (), pmv());
     SpriteProgram::draw(m->game->actors<Character>  (), pmv());
 
-    SpriteProgram::draw(atlas.hoop[m->game->hoop_state()], pmv() * mat4::translate({0, 5.3, 0}));
+    SpriteProgram::draw(atlas.hoop[state.hoop_state], pmv() * mat4::translate({0, 5.3, 0}));
 
-    if(m->game->alert() != "") {
-        SpriteProgram::drawText(m->game->alert(), headerfont.glyphs, 0, pmv() * mat4::translate({0, 4.6, 0}), -0.05);
+    if(state.alert != "") {
+        SpriteProgram::drawText(state.alert, headerfont.glyphs, 0, pmv() * mat4::translate({0, 4.6, 0}), -0.05);
     };
 }
 

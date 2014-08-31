@@ -25,7 +25,6 @@ enum CollisionType : cpCollisionType { ct_universe = 1, ct_sides, ct_dunk, ct_wa
 struct CharacterImpl : BodyShapes<Character> {
     CharacterImpl(int personality, vec2 const & pos)
     : BodyShapes{newBody(1, INFINITY, pos), atlas.ball, CP_NO_GROUP, l_play | l_fixtures}
-//    : BodyShapes{newBody(1, INFINITY, pos), atlas.characters[personality][0], CP_NO_GROUP, l_play | l_fixtures}
     {
         //setForce({0, 30});
         for (auto & shape : shapes()) cpShapeSetElasticity(&*shape, 1);
@@ -83,19 +82,14 @@ struct SwishImpl : public BodyShapes<Swish> {
     { }
 };
 
-struct Game::Members : GameImpl<CharacterImpl, PlatformImpl, BarrierImpl, DoorImpl, SwishImpl> {
+struct Game::Members : Game::State, GameImpl<CharacterImpl, PlatformImpl, BarrierImpl, DoorImpl, SwishImpl> {
     ShapePtr worldBox{sensor(boxShape(30, 30, {0, 0}, 0), ct_universe)};
     ShapePtr walls[3], hoop[2];
     ShapePtr dunk{sensor(segmentShape({-1, 6}, {1, 6}), ct_dunk)};
-    size_t score = 0;
     size_t n_for_n = 0;
     bool touched_sides = false;
     int bounced_walls = 0;
-    Game::HoopState hoop_state = hoop_off;
     size_t score_modifier = 0;
-    std::string alert = "";
-    size_t clock = 0;
-    GameMode mode;
     std::unique_ptr<Ticker> tick;
     std::unique_ptr<CancelTimer> hoop_timer;
 };
@@ -114,7 +108,11 @@ Game::Game(GameMode mode) : m{new Members} {
         delay(1, [=]{ m->actors<CharacterImpl>().emplace(0, v); release_ball(); }).cancel(destroyed);
         delay(2, [=, &d]{ m->removeWhenSpaceUnlocked(d); }).cancel(d.destroyed);
     };
-    
+
+    ended += [=]{
+        m->alert = "";
+    };
+
     m->onSeparate([=](CharacterImpl & character, NoActor<ct_universe> &) {
         switch (mode) {
             case m_arcade:
@@ -259,15 +257,7 @@ Game::Game(GameMode mode) : m{new Members} {
 
 Game::~Game() { }
 
-size_t Game::score() const { return m->score; }
-
-Game::HoopState Game::hoop_state() const { return m->hoop_state; }
-
-std::string Game::alert() const { return m->alert; }
-
-GameMode Game::mode() const { return m->mode; }
-
-size_t Game::clock() const { return m->clock; }
+Game::State const & Game::state() const { return *m; }
 
 std::unique_ptr<TouchHandler> Game::fingerTouch(vec2 const & p, float radius) {
     struct BounceTouchHandler : TouchHandler {
