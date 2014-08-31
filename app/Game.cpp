@@ -187,7 +187,7 @@ Game::Game(GameMode mode) : m{new Members} {
             }, arb);
         });
 
-        m->onSeparate([=](CharacterImpl & character, PlatformImpl &) {
+        m->onSeparate([=](CharacterImpl & character, PlatformImpl & p) {
             if (m->exiting) return;
 
             m->alert = "";
@@ -202,6 +202,7 @@ Game::Game(GameMode mode) : m{new Members} {
                 m->score_modifier += 1; // 3 pointer
             }
             m->actors<SwishImpl>().clear();
+            m->removeWhenSpaceUnlocked(p);
         });
 
         m->onSeparate([=](CharacterImpl & character, NoActor<ct_dunk> &, cpArbiter * arb) {
@@ -302,7 +303,9 @@ std::unique_ptr<TouchHandler> Game::fingerTouch(vec2 const & p, float radius) {
 
         ~BounceTouchHandler() {
             if (auto self = weak_self.lock()) {
-                self->m->removeWhenSpaceUnlocked(*self->m->actors<PlatformImpl>().begin());
+                if (!self->m->actors<PlatformImpl>().empty()) {
+                    self->m->removeWhenSpaceUnlocked(*self->m->actors<PlatformImpl>().begin());
+                }
             }
         }
 
