@@ -247,13 +247,11 @@ void Controller::onDraw() {
     if(m->game->alert() != "") {
         SpriteProgram::drawText(m->game->alert(), headerfont.glyphs, 0, pmv() * mat4::translate({0, 4.6, 0}), -0.05);
     };
-    
-//    SpriteProgram::draw(m->game->actors<Swish>       (), pmv());
 }
 
 void Controller::onResize(brac::vec2 const & size) {
     float halfH = 0.5 * background.bg.size().y;
-    ortho(-6, -6, 6, 6, 0, -INFINITY, halfH, halfH);
+    adaptiveOrtho(-6, -6, 6, 6, 0, -INFINITY, halfH, halfH);
 }
 
 std::unique_ptr<TouchHandler> Controller::onTouch(vec2 const & worldPos, float radius) {

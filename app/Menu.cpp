@@ -17,20 +17,17 @@ bool Menu::onUpdate(float dt) { return true; }
 void Menu::onDraw() {
     SpriteProgram::draw(overlay.fade, pmv());
 
-    SpriteProgram::draw(overlay.title, pmv() * mat4::scale(1.8) * mat4::translate({0, 2.5, 0}));
-    
+    SpriteProgram::draw(overlay.title, pmv() * mat4::translate({0, 4.5, 0}) * mat4::scale(1.8));
+
     arcade.draw(pmv());
     buzzer.draw(pmv());
     gamecenter.draw(pmv());
     twitter.draw(pmv());
     stats.draw(pmv());
-    
-    //SpriteProgram::drawText("ARCADE", menufont.glyphs, 0, pmv() * mat4::translate({0, 5, 0}));
 }
 
 void Menu::onResize(brac::vec2 const & size) {
-    //float halfH = 0.5 * background.bg.size().y;
-    ortho(-6, -6, 6, 6, 0, -INFINITY, 0, INFINITY);
+    adaptiveOrtho(-6, -6, 6, 6, 0, -INFINITY, 0, INFINITY, {100, INFINITY});
 }
 
 std::unique_ptr<TouchHandler> Menu::onTouch(vec2 const & worldPos, float radius) {
@@ -44,7 +41,7 @@ std::unique_ptr<TouchHandler> Menu::onTouch(vec2 const & worldPos, float radius)
         GameMode & m;
         bool & newGame;
         vec2 pos;
-        
+
         MenuTouchHandler(Menu & self, vec2 const & p, float radius)
         :   arc(self.arcade),
             buz(self.buzzer),
@@ -61,9 +58,9 @@ std::unique_ptr<TouchHandler> Menu::onTouch(vec2 const & worldPos, float radius)
             self.twitter.pressed = self.twitter.within(p);
             self.stats.pressed = self.stats.within(p);
         }
-        
+
         ~MenuTouchHandler() { }
-        
+
         virtual void moved(vec2 const & p, bool) {
             pos = p;
             arc.pressed = arc.within(p);
@@ -72,7 +69,7 @@ std::unique_ptr<TouchHandler> Menu::onTouch(vec2 const & worldPos, float radius)
             twi.pressed = twi.within(p);
             sta.pressed = sta.within(p);
         }
-        
+
         virtual void ended() {
             arc.pressed = false;
             buz.pressed = false;
