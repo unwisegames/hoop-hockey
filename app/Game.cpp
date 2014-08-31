@@ -26,7 +26,6 @@ struct CharacterImpl : BodyShapes<Character> {
     CharacterImpl(int personality, vec2 const & pos)
     : BodyShapes{newBody(1, INFINITY, pos), atlas.ball, CP_NO_GROUP, l_play | l_fixtures}
     {
-        //setForce({0, 30});
         for (auto & shape : shapes()) cpShapeSetElasticity(&*shape, 1);
     }
     
@@ -40,15 +39,10 @@ struct PlatformImpl : public BodyShapes<Platform> {
     
     PlatformImpl(vec2 const & pos, float radius)
     : BodyShapes{newBody(M_PLATFORM, INFINITY, pos), sensor(atlas.glow), CP_NO_GROUP, l_play}
-//    : BodyShapes{newBody(M_PLATFORM, INFINITY, pos), newCircleShape(radius), CP_NO_GROUP, l_play}
     {
-        setForce({0, 30}); // Antigravity
+        setForce({0, -GRAVITY});
         
         glow = newCircleShape(radius, {0, 0})(body());
-        
-        for (auto & shape : shapes()) {
-            cpShapeSetElasticity(&*shape, 0.3);
-        }
     }
 
     ~PlatformImpl() {

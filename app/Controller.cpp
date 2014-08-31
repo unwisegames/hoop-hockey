@@ -223,6 +223,9 @@ bool Controller::onUpdate(float dt) {
 void Controller::onDraw() {
     auto const & state = m->game->state();
 
+    auto & sprite_context = AutoSprite<SpriteProgram>::context();
+    sprite_context->tint = {1, 1, 1, 1};
+
     SpriteProgram::draw(background.bg, pmv());
     
     if(state.mode == m_buzzer) {
@@ -232,9 +235,11 @@ void Controller::onDraw() {
         SpriteProgram::draw(atlas.scoreboard[0], pmv() * mat4::scale(0.7) * mat4::translate({0, 13, 0}));
     }
 
+    sprite_context->tint = {1, 0, 0, 1};
     SpriteProgram::drawText(std::to_string(state.score), scorefont.glyphs, 1,
                             pmv() * mat4::translate({1.91, 8.7, 0}));
-    
+    sprite_context->tint = {1, 1, 1, 1};
+
     SpriteProgram::draw(atlas.threeline, pmv() * mat4::translate({0, THREE_LINE_Y, 0}));
     SpriteProgram::drawText("3PT", digifont.glyphs, 1, pmv() * mat4::translate({5.6, THREE_LINE_Y-0.65, 0}) * mat4::scale(0.2), 0.3);
 

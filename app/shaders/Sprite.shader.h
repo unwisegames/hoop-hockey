@@ -22,13 +22,14 @@ void main() {
 #ifdef BRICABRAC_FRAGMENT_SHADER
 
 BRICABRAC_UNIFORM(sampler2D, texture)
+BRICABRAC_UNIFORM(mediump vec4, tint)
 
 #ifndef BRICABRAC_HOSTED
 
 varying mediump vec2 v_texcoord;
 
 void main() {
-    gl_FragColor = texture2D(texture, v_texcoord);
+    gl_FragColor = texture2D(texture, v_texcoord) * tint;
 }
 
 #endif // BRICABRAC_HOSTED
