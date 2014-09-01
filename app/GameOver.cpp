@@ -23,13 +23,17 @@ void GameOver::onDraw() {
 
     drawText("GAME OVER", {0, 6.3}, 0.5);
 
+    auto & sprite_context = AutoSprite<SpriteProgram>::context();
     auto drawScore = [&](float y, std::string const & label, size_t value) {
         SpriteProgram::draw(overlay.box, pmv() * mat4::translate({0, y, 0 }) * mat4::scale(1.6));
         SpriteProgram::draw(overlay.score, pmv() * mat4::translate({1.44, y, 0}) * mat4::scale(1.6));
 
         drawText(label, {-2.45, y - 0.25f}, 0.45);
+
+        sprite_context->tint = {1, 0, 0, 1};
         SpriteProgram::drawText(std::to_string(value), scorefont.glyphs, 1,
                                 pmv() * mat4::translate({3.65, y - 0.5f, 0}) * mat4::scale(1.2));
+        sprite_context->tint = {1, 1, 1, 1};
     };
     drawScore(4.0, "SCORE", score_);
     drawScore(1.7, "BEST", best_);
