@@ -70,7 +70,7 @@ void Stats::onDraw() {
 }
 
 void Stats::onResize(brac::vec2 const & size) {
-    adaptiveOrtho(-6, -6, 6, 6, 0, -INFINITY, 0, INFINITY, {100, INFINITY});
+    adaptiveOrtho(-6, -6, 6, 6, 0, -INFINITY, 0, INFINITY, {90, INFINITY});
 }
 
 std::unique_ptr<TouchHandler> Stats::onTouch(vec2 const & worldPos, float radius) {
