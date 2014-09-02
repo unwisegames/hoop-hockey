@@ -293,6 +293,9 @@ std::unique_ptr<TouchHandler> Game::fingerTouch(vec2 const & p, float radius) {
                 if (!self->m->actors<PlatformImpl>().empty()) {
                     adjustSprings(p);
                     if (p.y > SHOT_LINE_Y) {
+                        self->foul();
+                        self->m->line_state = line_red;
+                        delay(0.5, [=]{ self->m->line_state = line_default; });
                         self->m->removeWhenSpaceUnlocked(*self->m->actors<PlatformImpl>().begin());
                     }
                 }

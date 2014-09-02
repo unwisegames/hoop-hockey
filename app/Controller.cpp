@@ -78,6 +78,10 @@ void Controller::newGame(GameMode mode) {
         m->audio.wall.play();
     };
     
+    m->game->foul += [=] {
+        m->audio.foul.play();
+    };
+    
     m->game->scored += [=]() {
         /*size_t score = m->game->state().score;
         if (score <= 25) {
@@ -243,7 +247,7 @@ void Controller::onDraw() {
     SpriteProgram::draw(atlas.threeline, pmv() * mat4::translate({0, THREE_LINE_Y, 0}));
     SpriteProgram::drawText("3PT", digifont.glyphs, 1, pmv() * mat4::translate({5.6, THREE_LINE_Y-0.65, 0}) * mat4::scale(0.2), 0.3);
 
-    SpriteProgram::draw(atlas.shotline, pmv() * mat4::translate({0, SHOT_LINE_Y, 0}));
+    SpriteProgram::draw(atlas.shotline[state.line_state], pmv() * mat4::translate({0, SHOT_LINE_Y, 0}));
 
     SpriteProgram::draw(m->game->actors<Door>       (), pmv());
 

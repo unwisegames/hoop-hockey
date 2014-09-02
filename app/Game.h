@@ -27,10 +27,12 @@ constexpr GameMode MODE = m_menu;
 class Game : public brac::GameBase, public std::enable_shared_from_this<Game> {
 public:
     enum HoopState { hoop_on = 1, hoop_off = 0 };
+    enum ShotlineState { line_default = 0, line_red = 1 };
 
     struct State {
         size_t score = 0;
         HoopState hoop_state = hoop_off;
+        ShotlineState line_state = line_default;
         std::string alert = "";
         GameMode mode;
         size_t clock = 0;
@@ -44,6 +46,7 @@ public:
     brac::Signal<void()> bounced_wall;
     brac::Signal<void()> clock_beep;
     brac::Signal<void()> release_ball;
+    brac::Signal<void()> foul;
 
     // Achievement-related events
     brac::Signal<void(size_t n)> n_for_n; // n hoops from n hits
