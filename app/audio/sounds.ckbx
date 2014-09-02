@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <bank name="sounds" volumeControls="true">
-    <music name="music" source="preview.mp3" />
+    <music name="music" source="theme.mp3" />
     <sound name="horn" source="horn.wav" format="adpcm" pooled="true" />
     <sound name="open" source="dooropen.wav" format="adpcm" pooled="true" />
     <sound name="wall" source="wall.wav" format="adpcm" pooled="true" />
