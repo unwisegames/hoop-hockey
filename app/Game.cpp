@@ -256,26 +256,28 @@ Game::State const & Game::state() const { return *m; }
 std::unique_ptr<TouchHandler> Game::fingerTouch(vec2 const & p, float radius) {
     struct BounceTouchHandler : TouchHandler {
         std::weak_ptr<Game> weak_self;
-        PlatformImpl & platform;
         ConstraintPtr finger[2];
 
         BounceTouchHandler(Game & self, vec2 const & p, float radius)
         : weak_self{self.shared_from_this()}
-        , platform{self.m->actors<PlatformImpl>().emplace(p, radius)}
         {
-            cpBody * world = self.m->spaceTime.staticBody;
+            if (p.y < SHOT_LINE_Y) {
+                PlatformImpl & platform{self.m->actors<PlatformImpl>().emplace(p, radius)};
 
-            constexpr float c = 50000;
-            constexpr float k = c * c / (4 * M_PLATFORM);  // Critically damped
+                cpBody * world = self.m->spaceTime.staticBody;
 
-            finger[0].reset(cpDampedSpringNew(world, platform.body(), {1000, 0}, {0, 0}, 1000, k, c));
-            finger[1].reset(cpDampedSpringNew(world, platform.body(), {0, 1000}, {0, 0}, 1000, k, c));
+                constexpr float c = 50000;
+                constexpr float k = c * c / (4 * M_PLATFORM);  // Critically damped
 
-            for (int i = 0; i < 2; ++i) {
-                cpSpaceAdd(&self.m->spaceTime, finger[i]);
+                finger[0].reset(cpDampedSpringNew(world, platform.body(), {1000, 0}, {0, 0}, 1000, k, c));
+                finger[1].reset(cpDampedSpringNew(world, platform.body(), {0, 1000}, {0, 0}, 1000, k, c));
+
+                for (int i = 0; i < 2; ++i) {
+                    cpSpaceAdd(&self.m->spaceTime, finger[i]);
+                }
+
+                adjustSprings(p);
             }
-
-            adjustSprings(p);
         }
 
         ~BounceTouchHandler() {
@@ -285,9 +287,16 @@ std::unique_ptr<TouchHandler> Game::fingerTouch(vec2 const & p, float radius) {
                 }
             }
         }
-
+        
         virtual void moved(vec2 const & p, bool) {
-            adjustSprings(p);
+            if (auto self = weak_self.lock()) {
+                if (!self->m->actors<PlatformImpl>().empty()) {
+                    adjustSprings(p);
+                    if (p.y > SHOT_LINE_Y) {
+                        self->m->removeWhenSpaceUnlocked(*self->m->actors<PlatformImpl>().begin());
+                    }
+                }
+            }
         }
 
         void adjustSprings(vec2 const & p) {
