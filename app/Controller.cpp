@@ -230,14 +230,14 @@ void Controller::onDraw() {
     
     if(state.mode == m_buzzer) {
         SpriteProgram::draw(atlas.scoreboard[1], pmv() * mat4::scale(0.7) * mat4::translate({0, 13, 0}));
-        SpriteProgram::drawText(std::to_string(state.clock), scorefont.glyphs, 1, pmv() * mat4::translate({-0.5, 8.7, 0}));
+        SpriteProgram::drawText(std::to_string(state.clock), scorefont.glyphs, 1, pmv() * mat4::translate({-0.5, 8.71, 0}));
     } else {
         SpriteProgram::draw(atlas.scoreboard[0], pmv() * mat4::scale(0.7) * mat4::translate({0, 13, 0}));
     }
 
     sprite_context->tint = {1, 0, 0, 1};
     SpriteProgram::drawText(std::to_string(state.score), scorefont.glyphs, 1,
-                            pmv() * mat4::translate({1.91, 8.7, 0}));
+                            pmv() * mat4::translate({1.91, 8.71, 0}));
     sprite_context->tint = {1, 1, 1, 1};
 
     SpriteProgram::draw(atlas.threeline, pmv() * mat4::translate({0, THREE_LINE_Y, 0}));
