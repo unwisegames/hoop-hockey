@@ -42,7 +42,9 @@ std::unique_ptr<TouchHandler> Menu::onTouch(vec2 const & worldPos, float radius)
         , index(index)
         , self(self)
         , pos(p)
-        { }
+        {
+            button->pressed = true;
+        }
 
         ~MenuTouchHandler() { }
 
@@ -79,5 +81,5 @@ std::unique_ptr<TouchHandler> Menu::onTouch(vec2 const & worldPos, float radius)
             return std::unique_ptr<TouchHandler>{new MenuTouchHandler{*this, worldPos, b, static_cast<size_t>(&b - buttons)}};
         }
     }
-    return {};
+    return TouchHandler::dummy();
 }
