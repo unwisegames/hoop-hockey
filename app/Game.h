@@ -4,8 +4,8 @@
 #include <bricabrac/Game/GameActor.h>
 #include <bricabrac/Utility/Signal.h>
 
-constexpr float THREE_LINE_Y = 0;
-constexpr float SHOT_LINE_Y = 4.7;
+constexpr float THREE_LINE_Y = -0.5;
+constexpr float SHOT_LINE_Y = 4.2;
 
 struct Character : brac::Actor { enum State { neutral, happy, sad, excited }; };
 struct Platform : brac::Actor { };
