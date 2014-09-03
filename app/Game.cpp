@@ -191,6 +191,13 @@ Game::Game(GameMode mode) : m{new Members} {
                 m->score_modifier += 1; // 3 pointer
             }
             m->actors<SwishImpl>().clear();
+            auto v = character.vel();
+            auto sp = length(v);
+            if (sp > 130) {
+                character.setVel(130 * unit(v));
+            }
+            //character.setVel({0, 0});
+            std::cerr << "VEL = " << character.vel().x << ", " << character.vel() << "\n";
             m->removeWhenSpaceUnlocked(p);
         });
 
