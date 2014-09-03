@@ -25,6 +25,7 @@ struct Controller::Members {
     std::shared_ptr<Game> game;
     sounds audio{0.5, 1};
     float angle = 0;
+    float low_y = 0;
     std::shared_ptr<GameOver> gameOver;
     std::shared_ptr<Menu> menu;
     std::shared_ptr<Stats> stats;
@@ -266,6 +267,8 @@ void Controller::onDraw() {
 void Controller::onResize(brac::vec2 const & size) {
     float halfH = 0.5 * background.bg.size().y;
     adaptiveOrtho(-6, -6, 6, 6, 0, -INFINITY, halfH, halfH);
+    auto bottom = inv_pmv() * vec3{0, -1, 0};
+    m->low_y = bottom.y;
 }
 
 std::unique_ptr<TouchHandler> Controller::onTouch(vec2 const & worldPos, float radius) {
