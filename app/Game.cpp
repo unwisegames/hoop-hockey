@@ -79,7 +79,7 @@ struct SwishImpl : public BodyShapes<Swish> {
 struct Game::Members : Game::State, GameImpl<CharacterImpl, PlatformImpl, BarrierImpl, DoorImpl, SwishImpl> {
     ShapePtr worldBox{sensor(boxShape(30, 30, {0, 0}, 0), ct_universe)};
     ShapePtr walls[3], hoop[2];
-    ShapePtr dunk{sensor(segmentShape({-1, 6}, {1, 6}), ct_dunk)};
+    ShapePtr dunk{sensor(segmentShape({-0.6, 5.5}, {0.6, 5.5}), ct_dunk)};
     size_t n_for_n = 0;
     bool touched_sides = false;
     int bounced_walls = 0;
@@ -194,7 +194,7 @@ Game::Game(GameMode mode) : m{new Members} {
             m->removeWhenSpaceUnlocked(p);
         });
 
-        m->onSeparate([=](CharacterImpl & character, NoActor<ct_dunk> &, cpArbiter * arb) {
+        m->onCollision([=](CharacterImpl & character, NoActor<ct_dunk> &, cpArbiter * arb) {
             if (character.vel().y < 0) {
                 m->score += BASE_SCORE + m->score_modifier;
                 scored();
@@ -230,9 +230,13 @@ Game::Game(GameMode mode) : m{new Members} {
                             m->alert = std::to_string(m->n_for_n/2) + " IN A ROW!";
                     }
                 }
+                return true;
+            } else {
+                character.setVel({0, 0});
+                return false;
             }
         });
-
+        
         m->onCollision([=](CharacterImpl &, NoActor<ct_sides> &, cpArbiter * arb) {
             m->touched_sides = true;
             if(cpArbiterIsFirstContact(arb)) {
@@ -296,8 +300,6 @@ std::unique_ptr<TouchHandler> Game::fingerTouch(vec2 const & p, float radius) {
                     adjustSprings(p);
                     if (p.y > SHOT_LINE_Y) {
                         foul();
-                        self->m->line_state = line_red;
-                        delay(0.5, [=]{ self->m->line_state = line_default; });
                         self->m->removeWhenSpaceUnlocked(*self->m->actors<PlatformImpl>().begin());
                     }
                 }
