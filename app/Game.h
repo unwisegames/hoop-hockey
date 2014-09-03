@@ -8,7 +8,7 @@ constexpr float THREE_LINE_Y = -0.5;
 constexpr float SHOT_LINE_Y = 4.2;
 
 struct Character : brac::Actor { enum State { neutral, happy, sad, excited }; };
-struct Platform : brac::Actor { };
+struct Platform : brac::Actor { virtual float radius() const = 0; };
 struct Barrier : brac::Actor { };
 struct Door : brac::Actor { };
 struct Swish : brac::Actor { };

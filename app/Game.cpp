@@ -36,9 +36,11 @@ struct CharacterImpl : BodyShapes<Character> {
 
 struct PlatformImpl : public BodyShapes<Platform> {
     ShapePtr glow;
+    float radius_;
     
     PlatformImpl(vec2 const & pos, float radius)
     : BodyShapes{newBody(M_PLATFORM, INFINITY, pos), sensor(atlas.glow), CP_NO_GROUP, l_play}
+    , radius_(radius)
     {
         setForce({0, -GRAVITY});
         
@@ -47,6 +49,10 @@ struct PlatformImpl : public BodyShapes<Platform> {
 
     ~PlatformImpl() {
         std::cerr << this << "->~PlatformImpl()\n";
+    }
+
+    float radius() const override {
+        return radius_;
     }
 };
 

@@ -231,7 +231,7 @@ void Controller::onDraw() {
     sprite_context->tint = {1, 1, 1, 1};
 
     SpriteProgram::draw(background.bg, pmv());
-    
+
     if(state.mode == m_buzzer) {
         SpriteProgram::draw(atlas.scoreboard[1], pmv() * mat4::scale(0.7) * mat4::translate({0, 13, 0}));
         SpriteProgram::drawText(std::to_string(state.clock), scorefont.glyphs, 1, pmv() * mat4::translate({-0.5, 8.71, 0}));
@@ -251,7 +251,9 @@ void Controller::onDraw() {
 
     SpriteProgram::draw(m->game->actors<Door>       (), pmv());
 
-    SpriteProgram::draw(m->game->actors<Platform>   (), pmv());
+    for (auto & platform : m->game->actors<Platform>()) {
+        SpriteProgram::drawActor(platform, pmv(), mat4::scale(0.65 * platform.radius()));
+    }
     SpriteProgram::draw(m->game->actors<Character>  (), pmv());
 
     SpriteProgram::draw(atlas.hoop[state.hoop_state], pmv() * mat4::translate({0, 5.3, 0}));
