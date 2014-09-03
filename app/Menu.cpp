@@ -32,25 +32,17 @@ void Menu::onResize(brac::vec2 const & size) {
 
 std::unique_ptr<TouchHandler> Menu::onTouch(vec2 const & worldPos, float radius) {
     struct MenuTouchHandler : TouchHandler {
-        Button * button = nullptr;
+        Button * button;
         size_t index;
-        GameMode & m;
-        bool & newGame;
+        Menu & self;
         vec2 pos;
 
-        MenuTouchHandler(Menu & self, vec2 const & p, float radius)
-        : m(self.mode)
-        , newGame(self.newGame)
+        MenuTouchHandler(Menu & self, vec2 const & p, Button * button, size_t index)
+        : button(button)
+        , index(index)
+        , self(self)
         , pos(p)
-        {
-            Button * buttons[] = {&self.arcade, &self.buzzer, &self.gamecenter, &self.twitter, &self.stats};
-            for (auto & b : buttons) {
-                if (b->contains(p)) {
-                    button = b;
-                    index = &b - buttons;
-                }
-            }
-        }
+        { }
 
         ~MenuTouchHandler() { }
 
@@ -63,11 +55,11 @@ std::unique_ptr<TouchHandler> Menu::onTouch(vec2 const & worldPos, float radius)
             button->pressed = false;
             if (button->contains(pos)) {
                 if (index == 0) { // arcade
-                    m = m_arcade;
-                    newGame = true;
+                    self.mode = m_arcade;
+                    self.newGame = true;
                 } else if (index == 1) { // buzzer
-                    m = m_buzzer;
-                    newGame = true;
+                    self.mode = m_buzzer;
+                    self.newGame = true;
                 }
 
                 button->click();
@@ -80,5 +72,12 @@ std::unique_ptr<TouchHandler> Menu::onTouch(vec2 const & worldPos, float radius)
             }
         }
     };
-    return std::unique_ptr<TouchHandler>{new MenuTouchHandler{*this, worldPos, radius}};
+
+    Button * buttons[] = {&arcade, &buzzer, &gamecenter, &twitter, &stats};
+    for (auto & b : buttons) {
+        if (b->contains(worldPos)) {
+            return std::unique_ptr<TouchHandler>{new MenuTouchHandler{*this, worldPos, b, static_cast<size_t>(&b - buttons)}};
+        }
+    }
+    return {};
 }
