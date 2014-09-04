@@ -92,6 +92,7 @@ struct Game::Members : Game::State, GameImpl<CharacterImpl, PlatformImpl, Barrie
     size_t score_modifier = 0;
     std::unique_ptr<Ticker> tick;
     std::unique_ptr<CancelTimer> hoop_timer;
+    brac::Stopwatch watch{false};
 };
 
 Game::Game(GameMode mode, float tly, float sly) : m{new Members} {
@@ -119,6 +120,8 @@ Game::Game(GameMode mode, float tly, float sly) : m{new Members} {
     m->onSeparate([=](CharacterImpl & character, NoActor<ct_universe> &) {
         switch (mode) {
             case m_arcade:
+                m->watch.stop();
+                m->duration = m->watch.time();
                 end();
                 break;
             case m_buzzer:
@@ -140,12 +143,16 @@ Game::Game(GameMode mode, float tly, float sly) : m{new Members} {
     {
         m->setGravity({0, GRAVITY});
 
+        m->watch.start();
+
         if (mode == m_buzzer) {
             m->clock = BUZZER_DURATION;
             m->tick.reset(new Ticker{1, [=]{
                 --m->clock;
                 if (m->clock == 0) {
                     m->tick.reset();
+                    m->watch.stop();
+                    m->duration = m->watch.time();
                     end();
                 } else if (m->clock <= 10) {
                     clock_beep();

@@ -39,6 +39,7 @@ struct Controller::Members {
     Persistent<int> bestBuzScore{"bestBuzScore"};
     Persistent<int> arcGamesPlayed{"arcGamesPlayed"};
     Persistent<int> buzGamesPlayed{"buzGamesPlayed"};
+    Persistent<float> longestGame{"longestGame"};
 };
 
 Controller::Controller() : m{new Controller::Members{}} {
@@ -114,6 +115,10 @@ void Controller::newGame(GameMode mode) {
         auto mode = state.mode;
 
         m->audio.buzz.play();
+
+        if (state.duration > *m->longestGame) {
+            m->longestGame = state.duration;
+        }
 
         if (mode == m_arcade) {
             m->arcGamesPlayed = ++*m->arcGamesPlayed;
@@ -191,7 +196,7 @@ void Controller::newGame(GameMode mode) {
         m->menu->stats.click += [=] {
             m->audio.click.play();
             m->stats = emplaceController<Stats>(*m->arcGamesPlayed, *m->buzGamesPlayed, *m->careerArcPoints, *m->careerBuzPoints,
-                                                *m->bestArcScore, *m->bestBuzScore);
+                                                *m->bestArcScore, *m->bestBuzScore, *m->longestGame);
             
             m->stats->exit.click += [=] {
                 m->audio.click.play();

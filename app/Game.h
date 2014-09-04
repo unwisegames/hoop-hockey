@@ -35,6 +35,7 @@ public:
         size_t clock = 0;
         float three_line_y = 0;
         float shot_line_y = 0;
+        float duration = 0;
     };
 
     brac::Signal<void()> show_menu;

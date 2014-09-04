@@ -18,19 +18,42 @@ std::string fstring(float number) {
     return buff.str();
 }
 
-Stats::Stats(size_t arcGames, size_t buzGames, size_t arcPoints, size_t buzPoints, size_t arcBest, size_t buzBest)
+std::string durationString(int seconds) {
+    int hours = (seconds / 60 / 60) % 24;
+    int mins = (seconds / 60) % 60;
+    int secs = seconds % 60;
+
+    std::string s = "";
+    if (hours > 0) {
+        s = std::to_string(hours) + "H ";
+    }
+    if (mins > 0) {
+        s += std::to_string(mins) + "M ";
+    }
+    if (secs > 0) {
+        s += std::to_string(secs) + "SEC";
+    }
+
+    return s;
+}
+
+Stats::Stats(size_t arcGames, size_t buzGames, size_t arcPoints, size_t buzPoints, size_t arcBest, size_t buzBest, float longest)
 :   arcGames_(arcGames),
     buzGames_(buzGames),
     arcPoints_(arcPoints),
     buzPoints_(buzPoints),
     arcBest_(arcBest),
-    buzBest_(buzBest)
+    buzBest_(buzBest),
+    longest_(longest)
 {
     if (arcGames_ > 0) {
         arcAvg_ = fstring(roundf(float(arcPoints_) / float(arcGames_) * 100) / 100);
     }
     if (buzGames_ > 0) {
         buzAvg_ = fstring(roundf(float(buzPoints_) / float(buzGames_) * 100) / 100);
+    }
+    if (longest_ > 0) {
+        longestStr_ = durationString(int(longest_));
     }
 }
 
@@ -64,7 +87,7 @@ void Stats::onDraw() {
 
     SpriteProgram::draw(overlay.statsingle, pmv() * mat4::translate({0, -3.2, 0}));
     drawText("LONGEST", {-3.1, -3.45}, 0.4);
-    drawText("1 MIN 15 SEC", {1.5, -3.45}, 0.4);
+    drawText(longestStr_, {1.8, -3.45}, 0.4);
     
     exit.draw(pmv());
 }

@@ -10,18 +10,10 @@
 
 class Stats : public brac::GameController {
 public:
-    Stats(size_t arcGames, size_t buzGames, size_t arcPoints, size_t buzPoints, size_t arcBest, size_t buzBest);
-/*    Stats(size_t arcGames, size_t buzGames, size_t arcPoints, size_t buzPoints, size_t arcBest, size_t buzBest)
-    :   arcGames_(arcGames),
-        buzGames_(buzGames),
-        arcPoints_(arcPoints),
-        buzPoints_(buzPoints),
-        arcBest_(arcBest),
-        buzBest_(buzBest) { }
-*/    
+    Stats(size_t arcGames, size_t buzGames, size_t arcPoints, size_t buzPoints, size_t arcBest, size_t buzBest, float longest);
+
     bool doClose = false;
-    //GameMode mode;
-    
+
     Button exit {buttons.exit, {0, -5.8}};
 
 private:
@@ -33,6 +25,8 @@ private:
     size_t buzBest_;
     std::string arcAvg_ = "0";
     std::string buzAvg_ = "0";
+    std::string longestStr_ = "";
+    float longest_;
 
     virtual bool onUpdate(float dt) override;
     virtual void onDraw() override;
