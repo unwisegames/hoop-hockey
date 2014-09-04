@@ -12,7 +12,7 @@
 constexpr float GRAVITY = -30;
 constexpr float M_PLATFORM = 100;
 constexpr int   BASE_SCORE = 2;
-constexpr int   BUZZER_DURATION = 5; // seconds
+constexpr int   BUZZER_DURATION = 60; // seconds
 
 using namespace brac;
 
@@ -94,9 +94,12 @@ struct Game::Members : Game::State, GameImpl<CharacterImpl, PlatformImpl, Barrie
     std::unique_ptr<CancelTimer> hoop_timer;
 };
 
-Game::Game(GameMode mode) : m{new Members} {
+Game::Game(GameMode mode, float tly, float sly) : m{new Members} {
     cpBody * world = m->spaceTime.staticBody;
+
     m->mode = mode;
+    m->three_line_y = tly;
+    m->shot_line_y = sly;
     
     auto createCharacter = [=]{
         vec2 v;
@@ -193,7 +196,7 @@ Game::Game(GameMode mode) : m{new Members} {
             m->touched_sides = false;
             m->bounced_walls = 0;
             m->score_modifier = 0;
-            if(character.pos().y < THREE_LINE_Y) {
+            if(character.pos().y < m->three_line_y) {
                 m->score_modifier += 1; // 3 pointer
             }
             m->actors<SwishImpl>().clear();
@@ -245,6 +248,7 @@ Game::Game(GameMode mode) : m{new Members} {
                 }
                 return true;
             } else {
+                m->alert = "NICE TRY!";
                 character.setVel({0, 0});
                 return false;
             }
@@ -278,7 +282,7 @@ std::unique_ptr<TouchHandler> Game::fingerTouch(vec2 const & p, float radius) {
         BounceTouchHandler(Game & self, vec2 const & p, float radius)
         : weak_self{self.shared_from_this()}
         {
-            if (p.y < SHOT_LINE_Y) {
+            if (p.y < self.m->shot_line_y) {
                 PlatformImpl & platform{self.m->actors<PlatformImpl>().emplace(p, radius)};
 
                 cpBody * world = self.m->spaceTime.staticBody;
@@ -311,7 +315,7 @@ std::unique_ptr<TouchHandler> Game::fingerTouch(vec2 const & p, float radius) {
             if (auto self = weak_self.lock()) {
                 if (!self->m->actors<PlatformImpl>().empty()) {
                     adjustSprings(p);
-                    if (p.y > SHOT_LINE_Y) {
+                    if (p.y > self->m->shot_line_y) {
                         foul();
                         self->m->removeWhenSpaceUnlocked(*self->m->actors<PlatformImpl>().begin());
                     }

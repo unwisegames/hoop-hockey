@@ -13,6 +13,7 @@
 #include "headerfont.sprites.h"
 
 #include <bricabrac/Data/Persistent.h>
+#include <bricabrac/Math/MathUtil.h>
 
 #include <iostream>
 
@@ -25,11 +26,12 @@ struct Controller::Members {
     std::shared_ptr<Game> game;
     sounds audio{0.5, 1};
     float angle = 0;
-    float low_y = 0;
+    float three_line_y = 0;
+    float shot_line_y = 0;
     std::shared_ptr<GameOver> gameOver;
     std::shared_ptr<Menu> menu;
     std::shared_ptr<Stats> stats;
-    
+
     // Persistent data
     Persistent<int> careerArcPoints{"careerArcPoints"};
     Persistent<int> careerBuzPoints{"careerBuzPoints"};
@@ -46,7 +48,7 @@ Controller::Controller() : m{new Controller::Members{}} {
 Controller::~Controller() { }
 
 void Controller::newGame(GameMode mode) {
-    m->game = std::make_shared<Game>(mode);
+    m->game = std::make_shared<Game>(mode, m->three_line_y, m->shot_line_y);
 
     m->audio.music->setLoopCount(-1);
     mode == m_menu ? m->audio.music->play() : m->audio.music->stop();
@@ -245,10 +247,10 @@ void Controller::onDraw() {
                             pmv() * mat4::translate({1.91, 8.71, 0}));
     sprite_context->tint = {1, 1, 1, 1};
 
-    SpriteProgram::draw(atlas.threeline, pmv() * mat4::translate({0, THREE_LINE_Y, 0}));
-    SpriteProgram::drawText("3PT", digifont.glyphs, 1, pmv() * mat4::translate({5.6, THREE_LINE_Y-0.65, 0}) * mat4::scale(0.2), 0.3);
+    SpriteProgram::draw(atlas.threeline, pmv() * mat4::translate({0, m->three_line_y, 0}));
+    SpriteProgram::drawText("3PT", digifont.glyphs, 1, pmv() * mat4::translate({5.6, static_cast<float>(m->three_line_y-0.65), 0}) * mat4::scale(0.2), 0.3);
 
-    SpriteProgram::draw(atlas.shotline[state.line_state], pmv() * mat4::translate({0, SHOT_LINE_Y, 0}));
+    SpriteProgram::draw(atlas.shotline[state.line_state], pmv() * mat4::translate({0, m->shot_line_y, 0}));
 
     SpriteProgram::draw(m->game->actors<Door>       (), pmv());
 
@@ -268,7 +270,10 @@ void Controller::onResize(brac::vec2 const & size) {
     float halfH = 0.5 * background.bg.size().y;
     adaptiveOrtho(-6, -6, 6, 6, 0, -INFINITY, halfH, halfH);
     auto bottom = inv_pmv() * vec3{0, -1, 0};
-    m->low_y = bottom.y;
+
+    // calculating here as onResize hasn't fired when Controller::newGame first called (rendering lines in the wrong spot first up)
+    m->three_line_y = mix(bottom.y, 10.0f, 0.33);
+    m->shot_line_y = mix(bottom.y, 10.0f, 0.61);
 }
 
 std::unique_ptr<TouchHandler> Controller::onTouch(vec2 const & worldPos, float radius) {

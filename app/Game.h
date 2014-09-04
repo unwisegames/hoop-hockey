@@ -4,9 +4,6 @@
 #include <bricabrac/Game/GameActor.h>
 #include <bricabrac/Utility/Signal.h>
 
-constexpr float THREE_LINE_Y = -0.5;
-constexpr float SHOT_LINE_Y = 4.2;
-
 struct Character : brac::Actor { enum State { neutral, happy, sad, excited }; };
 struct Platform : brac::Actor { virtual float radius() const = 0; };
 struct Barrier : brac::Actor { };
@@ -36,6 +33,8 @@ public:
         std::string alert = "";
         GameMode mode;
         size_t clock = 0;
+        float three_line_y = 0;
+        float shot_line_y = 0;
     };
 
     brac::Signal<void()> show_menu;
@@ -52,7 +51,7 @@ public:
     brac::Signal<void(size_t n)> n_for_n; // n hoops from n hits
     brac::Signal<void()> sharpshot;
 
-    Game(GameMode mode);
+    Game(GameMode mode, float tly, float sly);
     ~Game();
 
     State const & state() const;
