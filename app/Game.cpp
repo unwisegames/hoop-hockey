@@ -47,10 +47,6 @@ struct PlatformImpl : public BodyShapes<Platform> {
         glow = newCircleShape(radius, {0, 0})(body());
     }
 
-    ~PlatformImpl() {
-        std::cerr << this << "->~PlatformImpl()\n";
-    }
-
     float radius() const override {
         return radius_;
     }
@@ -212,8 +208,6 @@ Game::Game(GameMode mode, float tly, float sly) : m{new Members} {
             if (sp > 130) {
                 character.setVel(130 * unit(v));
             }
-            //character.setVel({0, 0});
-            std::cerr << "VEL = " << character.vel().x << ", " << character.vel() << "\n";
             m->removeWhenSpaceUnlocked(p);
         });
 
