@@ -269,6 +269,10 @@ void Controller::onDraw() {
     if(state.alert != "") {
         SpriteProgram::drawText(state.alert, headerfont.glyphs, 0, pmv() * mat4::translate({0, 4.6, 0}), -0.05);
     };
+
+    if (state.mode == m_buzzer) {
+        m->game->quit.draw(pmv());
+    }
 }
 
 void Controller::onResize(brac::vec2 const & size) {

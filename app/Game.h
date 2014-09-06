@@ -1,6 +1,8 @@
 #ifndef INCLUDED__Bounce__Game_h
 #define INCLUDED__Bounce__Game_h
 
+#include "UI.h"
+#include "atlas.sprites.h"
 #include <bricabrac/Game/GameActor.h>
 #include <bricabrac/Utility/Signal.h>
 
@@ -56,9 +58,11 @@ public:
     ~Game();
 
     State const & state() const;
-    
-    virtual std::unique_ptr<brac::TouchHandler> fingerTouch(brac::vec2 const & p, float radius) override;
+    Button quit {atlas.back, {-4.8, 10}};
 
+    virtual std::unique_ptr<brac::TouchHandler> fingerTouch(brac::vec2 const & p, float radius) override;
+    void gameOver();
+    
 private:
     struct Members;
     std::unique_ptr<Members> m;

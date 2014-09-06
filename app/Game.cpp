@@ -116,9 +116,7 @@ Game::Game(GameMode mode, float tly, float sly) : m{new Members} {
     m->onSeparate([=](CharacterImpl & character, NoActor<ct_universe> &) {
         switch (mode) {
             case m_arcade:
-                m->watch.stop();
-                m->duration = m->watch.time();
-                end();
+                gameOver();
                 break;
             case m_buzzer:
                 if (!m->actors<CharacterImpl>().empty()) {
@@ -146,10 +144,7 @@ Game::Game(GameMode mode, float tly, float sly) : m{new Members} {
             m->tick.reset(new Ticker{1, [=]{
                 --m->clock;
                 if (m->clock == 0) {
-                    m->tick.reset();
-                    m->watch.stop();
-                    m->duration = m->watch.time();
-                    end();
+                    gameOver();
                 } else if (m->clock <= 10) {
                     clock_beep();
                 }
@@ -249,7 +244,6 @@ Game::Game(GameMode mode, float tly, float sly) : m{new Members} {
                 }
                 return true;
             } else {
-                m->alert = "NICE TRY!";
                 character.setVel({0, 0});
                 return false;
             }
@@ -271,6 +265,15 @@ Game::Game(GameMode mode, float tly, float sly) : m{new Members} {
     }
 }
 
+void Game::gameOver() {
+    if (m->mode == m_buzzer) {
+        m->tick.reset();
+    }
+    m->watch.stop();
+    m->duration = m->watch.time();
+    end();
+}
+
 Game::~Game() { }
 
 Game::State const & Game::state() const { return *m; }
@@ -279,28 +282,34 @@ std::unique_ptr<TouchHandler> Game::fingerTouch(vec2 const & p, float radius) {
     struct BounceTouchHandler : TouchHandler {
         std::weak_ptr<Game> weak_self;
         ConstraintPtr finger[2];
+        Button & q;
 
         BounceTouchHandler(Game & self, vec2 const & p, float radius)
-        : weak_self{self.shared_from_this()}
+        : weak_self{self.shared_from_this()}, q(self.quit)
         {
-            if (p.y < self.m->shot_line_y) {
-                PlatformImpl & platform{self.m->actors<PlatformImpl>().emplace(p, radius)};
-
-                cpBody * world = self.m->spaceTime.staticBody;
-
-                constexpr float c = 50000;
-                constexpr float k = c * c / (4 * M_PLATFORM);  // Critically damped
-
-                finger[0].reset(cpDampedSpringNew(world, platform.body(), {1000, 0}, {0, 0}, 1000, k, c));
-                finger[1].reset(cpDampedSpringNew(world, platform.body(), {0, 1000}, {0, 0}, 1000, k, c));
-
-                for (int i = 0; i < 2; ++i) {
-                    cpSpaceAdd(&self.m->spaceTime, finger[i]);
-                }
-
-                adjustSprings(p);
+            if (self.quit.contains(p)) {
+                q.pressed = true;
+//                self.gameOver();
             } else {
-                foul();
+                if (p.y < self.m->shot_line_y) {
+                    PlatformImpl & platform{self.m->actors<PlatformImpl>().emplace(p, radius)};
+
+                    cpBody * world = self.m->spaceTime.staticBody;
+
+                    constexpr float c = 50000;
+                    constexpr float k = c * c / (4 * M_PLATFORM);  // Critically damped
+
+                    finger[0].reset(cpDampedSpringNew(world, platform.body(), {1000, 0}, {0, 0}, 1000, k, c));
+                    finger[1].reset(cpDampedSpringNew(world, platform.body(), {0, 1000}, {0, 0}, 1000, k, c));
+
+                    for (int i = 0; i < 2; ++i) {
+                        cpSpaceAdd(&self.m->spaceTime, finger[i]);
+                    }
+
+                    adjustSprings(p);
+                } else {
+                    foul();
+                }
             }
         }
 
@@ -314,6 +323,7 @@ std::unique_ptr<TouchHandler> Game::fingerTouch(vec2 const & p, float radius) {
         
         virtual void moved(vec2 const & p, bool) {
             if (auto self = weak_self.lock()) {
+                q.pressed = q.contains(p);
                 if (!self->m->actors<PlatformImpl>().empty()) {
                     adjustSprings(p);
                     if (p.y > self->m->shot_line_y) {
@@ -323,7 +333,15 @@ std::unique_ptr<TouchHandler> Game::fingerTouch(vec2 const & p, float radius) {
                 }
             }
         }
-        
+
+        virtual void ended() override {
+            if (q.pressed) {
+                if (auto self = weak_self.lock()) {
+                    self->gameOver();
+                }
+            }
+        }
+
         void foul() {
             if (auto self = weak_self.lock()) {
                 self->foul();
