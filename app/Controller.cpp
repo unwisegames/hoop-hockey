@@ -167,6 +167,7 @@ bool Controller::onUpdate(float dt) {
         newGame(m->mode);
         return false;
     }
+    m->game->update(dt);
     return true;
 }
 
