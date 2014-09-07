@@ -1,32 +1,62 @@
 #ifndef INCLUDED__Bounce__Stats_h
 #define INCLUDED__Bounce__Stats_h
 
-#include <bricabrac/Game/GameController.h>
 #include "UI.h"
 #include "Game.h"
 #include "buttons.sprites.h"
+
+#include <bricabrac/Data/Persistent.h>
+#include <bricabrac/Game/GameController.h>
+#include <bricabrac/Game/Bragging.h>
 
 #include <memory>
 
 class Stats : public brac::GameController {
 public:
-    Stats(size_t arcGames, size_t buzGames, size_t arcPoints, size_t buzPoints, size_t arcBest, size_t buzBest, float longest);
+    struct ModeState {
+        brac::Persistent<int>   careerPoints {"careerArcPoints"};
+        brac::Persistent<int>   bestScore    {"bestArcScore"};
+        brac::Persistent<int>   gamesPlayed  {"arcGamesPlayed"};
+        brac::Leaderboard & leaderboardBestScore;
 
-    bool doClose = false;
+        ModeState(std::string const & prefix, brac::Leaderboard & leaderboardBestScore)
+        : careerPoints  {prefix + "CareerPoints"}
+        , bestScore     {prefix + "BestScore"}
+        , gamesPlayed   {prefix + "GamesPlayed"}
+        , leaderboardBestScore(leaderboardBestScore)
+        { }
 
-    Button exit {buttons.exit, {0, -5.8}};
+        std::string average() const;
+
+        void reportScore(int score) {
+            ++gamesPlayed;
+            careerPoints += score;
+            if (*bestScore < score) {
+                bestScore = score;
+                leaderboardBestScore = score;
+            }
+        }
+    };
+    struct State {
+        ModeState arcade;
+        ModeState buzzer;
+        brac::Persistent<float> longestGame{"longestGame"};
+
+        State(brac::Leaderboard & arcadeLeaderboard, brac::Leaderboard & buzzerLeaderboard)
+        : arcade("arcade", arcadeLeaderboard)
+        , buzzer("buzzer", buzzerLeaderboard)
+        { }
+    };
+
+    Stats(State & state);
+
+    std::shared_ptr<Button> exit = makeButton(buttons.exit, {0, -5.8});
 
 private:
-    size_t arcGames_;
-    size_t buzGames_;
-    size_t arcPoints_;
-    size_t buzPoints_;
-    size_t arcBest_;
-    size_t buzBest_;
-    std::string arcAvg_ = "0";
-    std::string buzAvg_ = "0";
+    State & state;
+    std::string arcadeAvg_ = "0";
+    std::string buzzerAvg_ = "0";
     std::string longestStr_ = "";
-    float longest_;
 
     virtual bool onUpdate(float dt) override;
     virtual void onDraw() override;

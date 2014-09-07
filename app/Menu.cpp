@@ -12,6 +12,11 @@ using namespace brac;
 #define BRICABRAC_SHADER_NAME Sprite
 #include <bricabrac/Shader/LoadShaders.h>
 
+Menu::Menu() {
+    arcade->clicked += [=]{ pop(); };
+    buzzer->clicked += [=]{ pop(); };
+}
+
 bool Menu::onUpdate(float dt) { return true; }
 
 void Menu::onDraw() {

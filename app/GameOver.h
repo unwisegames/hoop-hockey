@@ -10,7 +10,7 @@
 
 class GameOver : public brac::GameController {
 public:
-    GameOver(GameMode m, size_t score, size_t best) : score_(score), best_(best) { }
+    GameOver(GameMode m, size_t score, size_t best);
 
     std::shared_ptr<Button> restart = makeButton(buttons.restart    , {0, -4.3});
     std::shared_ptr<Button> exit    = makeButton(buttons.exit       , {0, -1.3});

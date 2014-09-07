@@ -10,6 +10,11 @@ using namespace brac;
 #define BRICABRAC_SHADER_NAME Sprite
 #include <bricabrac/Shader/LoadShaders.h>
 
+GameOver::GameOver(GameMode m, size_t score, size_t best) : score_(score), best_(best) {
+    restart ->clicked += [=]{ pop(); };
+    exit    ->clicked += [=]{ pop(); };
+}
+
 bool GameOver::onUpdate(float dt) { return true; }
 
 void GameOver::onDraw() {

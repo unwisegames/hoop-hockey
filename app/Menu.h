@@ -19,6 +19,8 @@ public:
     std::shared_ptr<Button> twitter    = makeButton(buttons.twitter,    { 3, -5.7});
     std::shared_ptr<Button> stats      = makeButton(buttons.stats,      { 0, -5.7});
 
+    Menu();
+
 private:
     virtual bool onUpdate(float dt) override;
     virtual void onDraw() override;

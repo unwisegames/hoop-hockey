@@ -5,55 +5,44 @@
 #include "menufont.sprites.h"
 #include "overlay.sprites.h"
 
+#include <cmath>
+#include <iomanip>
+#include <sstream>
+
 using namespace brac;
 
 #define BRICABRAC_SHADER_NAME Sprite
 #include <bricabrac/Shader/LoadShaders.h>
-#include <sstream>
-#include <math.h>
 
-std::string fstring(float number) {
-    std::ostringstream buff;
-    buff << number;
-    return buff.str();
+std::string Stats::ModeState::average() const {
+    if (*gamesPlayed) {
+        std::ostringstream oss;
+        (oss << std::setprecision(2) << (float(*careerPoints) / *gamesPlayed));
+        return oss.str();
+    }
+    return "0";
 }
+
 
 std::string durationString(int seconds) {
-    int hours = (seconds / 60 / 60) % 24;
-    int mins = (seconds / 60) % 60;
-    int secs = seconds % 60;
+    int h = (seconds / 60 / 60) % 24;
+    int m = (seconds / 60) % 60;
+    int s = seconds % 60;
 
-    std::string s = "";
-    if (hours > 0) {
-        s = std::to_string(hours) + "H ";
-    }
-    if (mins > 0) {
-        s += std::to_string(mins) + "M ";
-    }
-    if (secs > 0) {
-        s += std::to_string(secs) + "SEC";
-    }
-
-    return s;
+    std::ostringstream oss;
+    oss << h << "H " << m << "M " << s << "SEC";
+    return oss.str();
 }
 
-Stats::Stats(size_t arcGames, size_t buzGames, size_t arcPoints, size_t buzPoints, size_t arcBest, size_t buzBest, float longest)
-:   arcGames_(arcGames),
-    buzGames_(buzGames),
-    arcPoints_(arcPoints),
-    buzPoints_(buzPoints),
-    arcBest_(arcBest),
-    buzBest_(buzBest),
-    longest_(longest)
+Stats::Stats(Stats::State & state)
+: state(state)
+, arcadeAvg_(state.arcade.average())
+, buzzerAvg_(state.arcade.average())
 {
-    if (arcGames_ > 0) {
-        arcAvg_ = fstring(roundf(float(arcPoints_) / float(arcGames_) * 100) / 100);
-    }
-    if (buzGames_ > 0) {
-        buzAvg_ = fstring(roundf(float(buzPoints_) / float(buzGames_) * 100) / 100);
-    }
-    if (longest_ > 0) {
-        longestStr_ = durationString(int(longest_));
+    exit->clicked += [=]{ pop(); };
+
+    if (*state.longestGame > 0) {
+        longestStr_ = durationString(*state.longestGame);
     }
 }
 
@@ -65,31 +54,29 @@ void Stats::onDraw() {
     };
 
     SpriteProgram::draw(overlay.fade, pmv());
-
     SpriteProgram::draw(overlay.window, pmv() * mat4::scale({1.27, 1.22, 1.22}));
 
     drawText("CAREER", {0, 6.8}, 0.55);
-    
     drawText("ARCADE", {-0.15, 5}, 0.4);
     drawText("BUZZER", {3.3, 5}, 0.4);
-    
-    auto drawStat = [&](std::string const & label, float y, std::string arc, std::string buz) {
+
+    auto drawStat = [&](std::string const & label, float y, std::string const & arc, std::string const & buz) {
         SpriteProgram::draw(overlay.stat, pmv() * mat4::translate({0, y, 0}));
         drawText(label, {-3.35, y - 0.25f}, 0.4);
         drawText(arc, {-0.15, y - 0.25f}, 0.4);
         drawText(buz, {3.3, y - 0.25f}, 0.4);
     };
-    
-    drawStat("GAMES", 4, std::to_string(arcGames_), std::to_string(buzGames_));
-    drawStat("POINTS", 2.2, std::to_string(arcPoints_), std::to_string(buzPoints_));
-    drawStat("AVG.", 0.4, arcAvg_, buzAvg_);
-    drawStat("BEST", -1.4, std::to_string(arcBest_), std::to_string(buzBest_));
+
+    drawStat("GAMES"    ,  4.0, std::to_string(*state.arcade.gamesPlayed ), std::to_string(*state.buzzer.gamesPlayed ));
+    drawStat("POINTS"   ,  2.2, std::to_string(*state.arcade.careerPoints), std::to_string(*state.buzzer.careerPoints));
+    drawStat("AVG."     ,  0.4, arcadeAvg_                                , buzzerAvg_                                );
+    drawStat("BEST"     , -1.4, std::to_string(*state.arcade.bestScore   ), std::to_string(*state.buzzer.bestScore   ));
 
     SpriteProgram::draw(overlay.statsingle, pmv() * mat4::translate({0, -3.2, 0}));
     drawText("LONGEST", {-3.1, -3.45}, 0.4);
     drawText(longestStr_, {1.8, -3.45}, 0.4);
-    
-    exit.draw(pmv());
+
+    exit->draw(pmv());
 }
 
 void Stats::onResize(brac::vec2 const & size) {
@@ -97,33 +84,8 @@ void Stats::onResize(brac::vec2 const & size) {
 }
 
 std::unique_ptr<TouchHandler> Stats::onTouch(vec2 const & worldPos, float radius) {
-    struct StatsTouchHandler : TouchHandler {
-        Button & exi;
-        bool & doClose;
-        vec2 pos;
-        
-        StatsTouchHandler(Stats & self, vec2 const & p, float radius)
-        :   exi(self.exit),
-            doClose(self.doClose),
-            pos(p)
-        {
-            self.exit.pressed = self.exit.contains(p);
-        }
-        
-        ~StatsTouchHandler() { }
-        
-        virtual void moved(vec2 const & p, bool) {
-            pos = p;
-            exi.pressed = exi.contains(p);
-        }
-        
-        virtual void ended() {
-            exi.pressed = false;
-            if (exi.contains(pos)) {
-                doClose = true;
-                exi.clicked();
-            }
-        }
-    };
-    return std::unique_ptr<TouchHandler>{new StatsTouchHandler{*this, worldPos, radius}};
+    if (auto handler = exit->handleTouch(worldPos)) {
+        return handler;
+    }
+    return TouchHandler::absorb();
 }
