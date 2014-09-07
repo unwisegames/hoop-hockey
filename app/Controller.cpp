@@ -25,11 +25,8 @@ using namespace brac;
 struct Controller::Members {
     std::shared_ptr<Game> game;
     sounds audio{0.5, 1};
-    float angle = 0;
     float three_line_y = 0;
     float shot_line_y = 0;
-    std::shared_ptr<GameOver> gameOver;
-    std::shared_ptr<Menu> menu;
     bool newGame = false;
     GameMode mode = m_menu;
 
@@ -56,6 +53,16 @@ void Controller::newGame(GameMode mode) {
         //if(brac::length_sq(impulse) > 400) {
         m->audio.bounce.play();
         //}
+    };
+
+    auto click = [=] { m->audio.click.play(); };
+
+    auto newGame = [=](GameMode mode) {
+        return [=]{
+            click();
+            m->mode = mode;
+            m->newGame = true;
+        };
     };
 
     m->game->door_open      += [=] { m->audio.open  .play(); };
@@ -124,44 +131,28 @@ void Controller::newGame(GameMode mode) {
             brag::points10000(ptPercent(cp, 10000), []{});
         }
 
-        m->gameOver = emplaceController<GameOver>(mode, score, *modeStats->bestScore);
+        auto gameOver = emplaceController<GameOver>(mode, score, *modeStats->bestScore);
 
-        m->gameOver->restart->clicked += [=] {
-            m->audio.click.play();
-            m->newGame = true;
-        };
-
-        m->gameOver->exit->clicked += [=] {
-            m->audio.click.play();
-            m->mode = m_menu;
-            m->newGame = true;
-        };
+        gameOver->restart   ->clicked += newGame(m->mode);
+        gameOver->exit      ->clicked += newGame(m_menu);
     };
 
     m->game->show_menu += [=] {
-        m->menu = emplaceController<Menu>();
+        auto menu = emplaceController<Menu>();
 
-        auto click = [=] { m->audio.click.play(); };
-        m->menu->arcade->clicked += [=]{
-            click();
-            m->mode = m_arcade;
-            m->newGame = true;
-        };
-        m->menu->buzzer->clicked += [=]{
-            click();
-            m->mode = m_buzzer;
-            m->newGame = true;
-        };
-        m->menu->gamecenter->clicked += [=]{
+        menu->arcade->clicked += newGame(m_arcade);
+        menu->buzzer->clicked += newGame(m_buzzer);
+
+        menu->gamecenter->clicked += [=]{
             click();
             presentBragUI();
         };
-        m->menu->twitter->clicked += [=]{
+        menu->twitter->clicked += [=]{
             click();
             UrlOpener::open("http://www.twitter.com/UnwiseGames");
         };
 
-        m->menu->stats->clicked += [=]{
+        menu->stats->clicked += [=]{
             click();
             auto stats = emplaceController<Stats>(m->statsState);
             stats->exit->clicked += [=]{
@@ -173,15 +164,9 @@ void Controller::newGame(GameMode mode) {
 
 bool Controller::onUpdate(float dt) {
     if (m->newGame) {
-        m->gameOver.reset();
-        m->menu.reset();
         newGame(m->mode);
         return false;
     }
-    if (!m->game->update(dt)) {
-        //newGame();
-    }
-    m->angle += dt;
     return true;
 }
 
