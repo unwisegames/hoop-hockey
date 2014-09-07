@@ -49,7 +49,7 @@ Controller::Controller() : m{new Controller::Members{}} {
 Controller::~Controller() { }
 
 void Controller::newGame(GameMode mode) {
-    m->game = std::make_shared<Game>(mode, m->three_line_y, m->shot_line_y);
+    m->game = std::make_shared<Game>(spaceTime(), mode, m->three_line_y, m->shot_line_y);
 
     m->audio.music->setLoopCount(-1);
     mode == m_menu ? m->audio.music->play() : m->audio.music->stop();
@@ -165,42 +165,29 @@ void Controller::newGame(GameMode mode) {
         
         m->gameOver = emplaceController<GameOver>(mode, score, mode == m_arcade ? *m->bestArcScore : *m->bestBuzScore);
 
-        m->gameOver->restart.click += [=] {
+        m->gameOver->restart.clicked += [=] {
             m->audio.click.play();
         };
         
-        m->gameOver->exit.click += [=] {
+        m->gameOver->exit.clicked += [=] {
             m->audio.click.play();
         };
     };
     
     m->game->show_menu += [=] {
         m->menu = emplaceController<Menu>();
-        
-        m->menu->arcade.click += [=] {
-            m->audio.click.play();
-        };
-        
-        m->menu->buzzer.click += [=] {
-            m->audio.click.play();
-        };
 
-        m->menu->gamecenter.click += [=] {
-            m->audio.click.play();
-        };
-        
-        m->menu->twitter.click += [=] {
-            m->audio.click.play();
-        };
+        auto clicked = [=] { m->audio.click.play(); };
+        m->menu->arcade     .clicked += clicked;
+        m->menu->buzzer     .clicked += clicked;
+        m->menu->gamecenter .clicked += clicked;
+        m->menu->twitter    .clicked += clicked;
 
-        m->menu->stats.click += [=] {
-            m->audio.click.play();
+        m->menu->stats.clicked += [=] {
+            clicked();
             m->stats = emplaceController<Stats>(*m->arcGamesPlayed, *m->buzGamesPlayed, *m->careerArcPoints, *m->careerBuzPoints,
                                                 *m->bestArcScore, *m->bestBuzScore, *m->longestGame);
-            
-            m->stats->exit.click += [=] {
-                m->audio.click.play();
-            };
+            m->stats->exit.clicked += clicked;
         };
     };
 }
@@ -271,7 +258,7 @@ void Controller::onDraw() {
     };
 
     if (state.mode == m_buzzer) {
-        m->game->quit.draw(pmv());
+        state.quit->draw(pmv());
     }
 }
 

@@ -23,8 +23,8 @@ enum Layer : cpLayers { l_play = 1<<0, l_fixtures = 1<<1 };
 enum CollisionType : cpCollisionType { ct_universe = 1, ct_sides, ct_dunk, ct_wall };
 
 struct CharacterImpl : BodyShapes<Character> {
-    CharacterImpl(int personality, vec2 const & pos)
-    : BodyShapes{newBody(1, INFINITY, pos), atlas.ball, CP_NO_GROUP, l_play | l_fixtures}
+    CharacterImpl(cpSpace * space, int personality, vec2 const & pos)
+    : BodyShapes{space, newBody(1, INFINITY, pos), atlas.ball, CP_NO_GROUP, l_play | l_fixtures}
     {
         for (auto & shape : shapes()) cpShapeSetElasticity(&*shape, 1);
     }
@@ -38,8 +38,8 @@ struct PlatformImpl : public BodyShapes<Platform> {
     ShapePtr glow;
     float radius_;
     
-    PlatformImpl(vec2 const & pos, float radius)
-    : BodyShapes{newBody(M_PLATFORM, INFINITY, pos), sensor(atlas.glow), CP_NO_GROUP, l_play}
+    PlatformImpl(cpSpace * space, vec2 const & pos, float radius)
+    : BodyShapes{space, newBody(M_PLATFORM, INFINITY, pos), sensor(atlas.glow), CP_NO_GROUP, l_play}
     , radius_(radius)
     {
         setForce({0, -GRAVITY});
@@ -55,8 +55,8 @@ struct PlatformImpl : public BodyShapes<Platform> {
 struct BarrierImpl : public BodyShapes<Barrier> {
     ConstraintPtr pivot, limit, spring;
 
-    BarrierImpl(cpBody * world, vec2 const & hinge, float angle)
-    : BodyShapes{newBody(0.1, 10, hinge), newBoxShape(0.1, 1.8, {0, -0.8}), gr_ring, l_fixtures}
+    BarrierImpl(cpSpace * space, cpBody * world, vec2 const & hinge, float angle)
+    : BodyShapes{space, newBody(0.1, 10, hinge), newBoxShape(0.1, 1.8, {0, -0.8}), gr_ring, l_fixtures}
     {
         setAngle(angle);
 
@@ -67,14 +67,14 @@ struct BarrierImpl : public BodyShapes<Barrier> {
 };
 
 struct DoorImpl : public BodyShapes<Door> {
-    DoorImpl(vec2 const & pos)
-    : BodyShapes{newStaticBody(pos), sensor(atlas.door)}
+    DoorImpl(cpSpace * space, vec2 const & pos)
+    : BodyShapes{space, newStaticBody(pos), sensor(atlas.door)}
     { }
 };
 
 struct SwishImpl : public BodyShapes<Swish> {
-    SwishImpl(vec2 const & pos)
-    : BodyShapes{newStaticBody(pos), sensor(overlay.box)} // overlay.swish hidden in atlas (TEMP)
+    SwishImpl(cpSpace * space, vec2 const & pos)
+    : BodyShapes{space, newStaticBody(pos), sensor(overlay.box)} // overlay.swish hidden in atlas (TEMP)
     { }
 };
 
@@ -89,9 +89,11 @@ struct Game::Members : Game::State, GameImpl<CharacterImpl, PlatformImpl, Barrie
     std::unique_ptr<Ticker> tick;
     std::unique_ptr<CancelTimer> hoop_timer;
     brac::Stopwatch watch{false};
+
+    Members(SpaceTime & spaceTime) : Impl(spaceTime) { }
 };
 
-Game::Game(GameMode mode, float tly, float sly) : m{new Members} {
+Game::Game(SpaceTime & spaceTime, GameMode mode, float tly, float sly) : GameBase{spaceTime}, m{new Members{spaceTime}} {
     cpBody * world = m->spaceTime.staticBody;
 
     m->mode = mode;
@@ -104,8 +106,8 @@ Game::Game(GameMode mode, float tly, float sly) : m{new Members} {
             v = {rand<float>(-5, 5), rand<float>(2, 10)};
         } while (-3 < v.x && v.x < 3 && v.y > 4);
         
-        auto & d = m->actors<DoorImpl>().emplace(v); door_open();
-        delay(1, [=]{ m->actors<CharacterImpl>().emplace(0, v); release_ball(); }).cancel(destroyed);
+        auto & d = m->emplace<DoorImpl>(v); door_open();
+        delay(1, [=]{ m->emplace<CharacterImpl>(0, v); release_ball(); }).cancel(destroyed);
         delay(2, [=, &d]{ m->removeWhenSpaceUnlocked(d); }).cancel(d.destroyed);
     };
 
@@ -174,7 +176,7 @@ Game::Game(GameMode mode, float tly, float sly) : m{new Members} {
             cpShapeSetCollisionType(&*hoop, ct_sides);
             cpShapeSetElasticity(&*hoop, 0.3);
 
-            m->actors<BarrierImpl>().emplace(world, hinge, 0.5f - i);
+            m->emplace<BarrierImpl>(world, hinge, 0.5f - i);
         }
 
         m->onPostSolve([=](CharacterImpl & character, PlatformImpl &, cpArbiter * arb) {
@@ -262,6 +264,10 @@ Game::Game(GameMode mode, float tly, float sly) : m{new Members} {
                 bounced_wall();
             }
         });
+
+        m->quit->clicked += [=]{
+            gameOver();
+        };
     }
 }
 
@@ -279,20 +285,42 @@ Game::~Game() { }
 Game::State const & Game::state() const { return *m; }
 
 std::unique_ptr<TouchHandler> Game::fingerTouch(vec2 const & p, float radius) {
-    struct BounceTouchHandler : TouchHandler {
-        std::weak_ptr<Game> weak_self;
-        ConstraintPtr finger[2];
-        Button & q;
+    if (m->quit->contains(p)) {
+        struct ButtonHandler : TouchHandler {
+            std::weak_ptr<Button> weak_quit;
 
-        BounceTouchHandler(Game & self, vec2 const & p, float radius)
-        : weak_self{self.shared_from_this()}, q(self.quit)
-        {
-            if (self.quit.contains(p)) {
-                q.pressed = true;
-//                self.gameOver();
-            } else {
+            ButtonHandler(std::shared_ptr<Button> const & quit)
+            : weak_quit(quit)
+            {
+                quit->pressed = true;
+            }
+
+            virtual void moved(vec2 const & p, bool) {
+                if (auto quit = weak_quit.lock()) {
+                    quit->pressed = quit->contains(p);
+                }
+            }
+
+            virtual void ended() override {
+                if (auto quit = weak_quit.lock()) {
+                    if (quit->pressed) {
+                        quit->clicked();
+                    }
+                }
+            }
+        };
+
+        return std::unique_ptr<TouchHandler>{new ButtonHandler{m->quit}};
+    } else {
+        struct BounceTouchHandler : TouchHandler {
+            std::weak_ptr<Game> weak_self;
+            ConstraintPtr finger[2];
+
+            BounceTouchHandler(Game & self, vec2 const & p, float radius)
+            : weak_self{self.shared_from_this()}
+            {
                 if (p.y < self.m->shot_line_y) {
-                    PlatformImpl & platform{self.m->actors<PlatformImpl>().emplace(p, radius)};
+                    PlatformImpl & platform{self.m->emplace<PlatformImpl>(p, radius)};
 
                     cpBody * world = self.m->spaceTime.staticBody;
 
@@ -311,53 +339,45 @@ std::unique_ptr<TouchHandler> Game::fingerTouch(vec2 const & p, float radius) {
                     foul();
                 }
             }
-        }
 
-        ~BounceTouchHandler() {
-            if (auto self = weak_self.lock()) {
-                if (!self->m->actors<PlatformImpl>().empty()) {
-                    self->m->removeWhenSpaceUnlocked(*self->m->actors<PlatformImpl>().begin());
-                }
-            }
-        }
-        
-        virtual void moved(vec2 const & p, bool) {
-            if (auto self = weak_self.lock()) {
-                q.pressed = q.contains(p);
-                if (!self->m->actors<PlatformImpl>().empty()) {
-                    adjustSprings(p);
-                    if (p.y > self->m->shot_line_y) {
-                        foul();
+            ~BounceTouchHandler() {
+                if (auto self = weak_self.lock()) {
+                    if (!self->m->actors<PlatformImpl>().empty()) {
                         self->m->removeWhenSpaceUnlocked(*self->m->actors<PlatformImpl>().begin());
                     }
                 }
             }
-        }
 
-        virtual void ended() override {
-            if (q.pressed) {
+            virtual void moved(vec2 const & p, bool) {
                 if (auto self = weak_self.lock()) {
-                    self->gameOver();
+                    if (!self->m->actors<PlatformImpl>().empty()) {
+                        adjustSprings(p);
+                        if (p.y > self->m->shot_line_y) {
+                            foul();
+                            self->m->removeWhenSpaceUnlocked(*self->m->actors<PlatformImpl>().begin());
+                        }
+                    }
                 }
             }
-        }
 
-        void foul() {
-            if (auto self = weak_self.lock()) {
-                self->foul();
-                self->m->line_state = line_red;
-                delay(0.5, [=]{ self->m->line_state = line_default; });
+            void foul() {
+                if (auto self = weak_self.lock()) {
+                    self->foul();
+                    self->m->line_state = line_red;
+                    delay(0.5, [=]{ self->m->line_state = line_default; });
+                }
             }
-        }
 
-        void adjustSprings(vec2 const & p) {
-            if (auto self = weak_self.lock()) {
-                cpDampedSpringSetRestLength(&*finger[0], length(p - vec2{1000, 0}));
-                cpDampedSpringSetRestLength(&*finger[1], length(p - vec2{0, 1000}));
+            void adjustSprings(vec2 const & p) {
+                if (auto self = weak_self.lock()) {
+                    cpDampedSpringSetRestLength(&*finger[0], length(p - vec2{1000, 0}));
+                    cpDampedSpringSetRestLength(&*finger[1], length(p - vec2{0, 1000}));
+                }
             }
-        }
-    };
-    return std::unique_ptr<TouchHandler>{new BounceTouchHandler{*this, p, 0.8f + radius}};
+        };
+        
+        return std::unique_ptr<TouchHandler>{new BounceTouchHandler{*this, p, 0.8f + radius}};
+    }
 }
 
 void Game::doUpdate(float dt) { m->update(dt); }

@@ -64,7 +64,7 @@ std::unique_ptr<TouchHandler> Menu::onTouch(vec2 const & worldPos, float radius)
                     self.newGame = true;
                 }
 
-                button->click();
+                button->clicked();
 
                 if (index == 2) { // gamecenter
                     presentBragUI();

@@ -121,7 +121,7 @@ std::unique_ptr<TouchHandler> Stats::onTouch(vec2 const & worldPos, float radius
             exi.pressed = false;
             if (exi.contains(pos)) {
                 doClose = true;
-                exi.click();
+                exi.clicked();
             }
         }
     };

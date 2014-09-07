@@ -3,8 +3,11 @@
 
 #include "UI.h"
 #include "atlas.sprites.h"
+
 #include <bricabrac/Game/GameActor.h>
 #include <bricabrac/Utility/Signal.h>
+
+#include <memory>
 
 struct Character : brac::Actor { enum State { neutral, happy, sad, excited }; };
 struct Platform : brac::Actor { virtual float radius() const = 0; };
@@ -38,6 +41,7 @@ public:
         float three_line_y = 0;
         float shot_line_y = 0;
         float duration = 0;
+        std::shared_ptr<Button> quit{std::make_shared<Button>(atlas.back, brac::vec2{-4.8, 10})};
     };
 
     brac::Signal<void()> show_menu;
@@ -49,16 +53,16 @@ public:
     brac::Signal<void()> clock_beep;
     brac::Signal<void()> release_ball;
     brac::Signal<void()> foul;
+    brac::Signal<void()> quit;
 
     // Achievement-related events
     brac::Signal<void(size_t n)> n_for_n; // n hoops from n hits
     brac::Signal<void()> sharpshot;
 
-    Game(GameMode mode, float tly, float sly);
+    Game(brac::SpaceTime & spaceTime, GameMode mode, float tly, float sly);
     ~Game();
 
     State const & state() const;
-    Button quit {atlas.back, {-4.8, 10}};
 
     virtual std::unique_ptr<brac::TouchHandler> fingerTouch(brac::vec2 const & p, float radius) override;
     void gameOver();
