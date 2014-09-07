@@ -14,6 +14,7 @@
 
 #include <bricabrac/Data/Persistent.h>
 #include <bricabrac/Math/MathUtil.h>
+#include <bricabrac/Utility/UrlOpener.h>
 
 #include <iostream>
 
@@ -31,6 +32,8 @@ struct Controller::Members {
     std::shared_ptr<GameOver> gameOver;
     std::shared_ptr<Menu> menu;
     std::shared_ptr<Stats> stats;
+    bool newGame = false;
+    GameMode mode = m_menu;
 
     // Persistent data
     Persistent<int> careerArcPoints{"careerArcPoints"};
@@ -49,51 +52,28 @@ Controller::Controller() : m{new Controller::Members{}} {
 Controller::~Controller() { }
 
 void Controller::newGame(GameMode mode) {
+    m->newGame = false;
     m->game = std::make_shared<Game>(spaceTime(), mode, m->three_line_y, m->shot_line_y);
 
     m->audio.music->setLoopCount(-1);
     mode == m_menu ? m->audio.music->play() : m->audio.music->stop();
-    
+
     // TODO: Announce achievements.
 
     m->game->bounced += [=](Character const & character, vec2 const & impulse) {
         //if(brac::length_sq(impulse) > 400) {
-            m->audio.bounce.play();
+        m->audio.bounce.play();
         //}
     };
-    
-    m->game->door_open += [=] {
-        m->audio.open.play();
-    };
-    
-    m->game->release_ball += [=] {
-        m->audio.pop.play();
-    };
-    
-    m->game->clock_beep += [=] {
-        m->audio.beep.play();
-    };
-    
-    m->game->bounced_wall += [=] {
-        m->audio.wall2.play();
-    };
-    
-    m->game->touched_sides += [=] {
-        m->audio.wall.play();
-    };
-    
-    m->game->foul += [=] {
-        m->audio.foul.play();
-    };
-    
+
+    m->game->door_open      += [=] { m->audio.open  .play(); };
+    m->game->release_ball   += [=] { m->audio.pop   .play(); };
+    m->game->clock_beep     += [=] { m->audio.beep  .play(); };
+    m->game->bounced_wall   += [=] { m->audio.wall2 .play(); };
+    m->game->touched_sides  += [=] { m->audio.wall  .play(); };
+    m->game->foul           += [=] { m->audio.foul  .play(); };
+
     m->game->scored += [=]() {
-        /*size_t score = m->game->state().score;
-        if (score <= 25) {
-            brag::score25(4 * score, []{});
-        }
-        if (score <= 100) {
-            brag::score100(score, []{});
-        }*/
         m->audio.swish.play();
         m->audio.horn.play();
     };
@@ -109,7 +89,7 @@ void Controller::newGame(GameMode mode) {
     m->game->sharpshot += [=]{
         brag::sharpshot(100, []{});
     };
-    
+
     m->game->ended += [=] {
         auto const & state = m->game->state();
         auto mode = state.mode;
@@ -125,7 +105,7 @@ void Controller::newGame(GameMode mode) {
         } else if (mode == m_buzzer) {
             m->buzGamesPlayed = ++*m->buzGamesPlayed;
         }
-        
+
         size_t score = state.score;
         if (score > 0) {
             switch (state.mode) {
@@ -145,14 +125,14 @@ void Controller::newGame(GameMode mode) {
                     break;
                 case m_menu: break;
             }
-            
+
             if (score >= 25) {
                 brag::score25(100, []{});
                 if (score >= 100) {
                     brag::score100(100, []{});
                 }
             }
-            
+
             auto ptPercent = [=](size_t cp, int target) {
                 return (float(cp)/target)*100 > 100 ? 100 : (float(cp)/target)*100;
             };
@@ -162,49 +142,62 @@ void Controller::newGame(GameMode mode) {
             brag::points1000(ptPercent(cp, 1000), []{});
             brag::points10000(ptPercent(cp, 10000), []{});
         }
-        
+
         m->gameOver = emplaceController<GameOver>(mode, score, mode == m_arcade ? *m->bestArcScore : *m->bestBuzScore);
 
-        m->gameOver->restart.clicked += [=] {
+        m->gameOver->restart->clicked += [=] {
             m->audio.click.play();
+            m->newGame = true;
         };
-        
-        m->gameOver->exit.clicked += [=] {
+
+        m->gameOver->exit->clicked += [=] {
             m->audio.click.play();
+            m->mode = m_menu;
+            m->newGame = true;
         };
     };
-    
+
     m->game->show_menu += [=] {
         m->menu = emplaceController<Menu>();
 
-        auto clicked = [=] { m->audio.click.play(); };
-        m->menu->arcade     .clicked += clicked;
-        m->menu->buzzer     .clicked += clicked;
-        m->menu->gamecenter .clicked += clicked;
-        m->menu->twitter    .clicked += clicked;
+        auto click = [=] { m->audio.click.play(); };
+        m->menu->arcade->clicked += [=]{
+            click();
+            m->mode = m_arcade;
+            m->newGame = true;
+        };
+        m->menu->buzzer->clicked += [=]{
+            click();
+            m->mode = m_buzzer;
+            m->newGame = true;
+        };
+        m->menu->gamecenter->clicked += [=]{
+            click();
+            presentBragUI();
+        };
+        m->menu->twitter->clicked += [=]{
+            click();
+            UrlOpener::open("http://www.twitter.com/UnwiseGames");
+        };
 
-        m->menu->stats.clicked += [=] {
-            clicked();
+        m->menu->stats->clicked += [=] {
+            click();
             m->stats = emplaceController<Stats>(*m->arcGamesPlayed, *m->buzGamesPlayed, *m->careerArcPoints, *m->careerBuzPoints,
                                                 *m->bestArcScore, *m->bestBuzScore, *m->longestGame);
-            m->stats->exit.clicked += clicked;
+            m->stats->exit.clicked += click;
         };
     };
 }
 
 bool Controller::onUpdate(float dt) {
-    if (m->gameOver && m->gameOver->newGame) {
-        auto newMode = m->gameOver->mode;
+    if (m->newGame) {
+        bool pop = m->gameOver || m->menu;
         m->gameOver.reset();
-        popController();
-        newGame(newMode);
-        return false;
-    }
-    if (m->menu && m->menu->newGame) {
-        auto newMode = m->menu->mode;
         m->menu.reset();
-        popController();
-        newGame(newMode);
+        if (pop) {
+            popController();
+        }
+        newGame(m->mode);
         return false;
     }
     if (m->stats && m->stats->doClose) {

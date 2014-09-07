@@ -12,12 +12,12 @@ class Menu : public brac::GameController {
 public:
     bool newGame = false;
     GameMode mode = m_menu;
-    
-    Button arcade {buttons.arcade,          {0, 0.5}};
-    Button buzzer {buttons.buzzer,          {0, -2.5}};
-    Button gamecenter {buttons.gamecenter,  {-3, -5.7}};
-    Button twitter {buttons.twitter,        {3, -5.7}};
-    Button stats {buttons.stats,            {0, -5.7}};
+
+    std::shared_ptr<Button> arcade     = makeButton(buttons.arcade,     { 0,  0.5});
+    std::shared_ptr<Button> buzzer     = makeButton(buttons.buzzer,     { 0, -2.5});
+    std::shared_ptr<Button> gamecenter = makeButton(buttons.gamecenter, {-3, -5.7});
+    std::shared_ptr<Button> twitter    = makeButton(buttons.twitter,    { 3, -5.7});
+    std::shared_ptr<Button> stats      = makeButton(buttons.stats,      { 0, -5.7});
 
 private:
     virtual bool onUpdate(float dt) override;

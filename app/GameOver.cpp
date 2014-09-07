@@ -38,8 +38,8 @@ void GameOver::onDraw() {
     drawScore(4.0, "SCORE", score_);
     drawScore(1.7, "BEST", best_);
 
-    restart.draw(pmv());
-    exit.draw(pmv());
+    restart->draw(pmv());
+    exit->draw(pmv());
 }
 
 void GameOver::onResize(brac::vec2 const & size) {
@@ -47,45 +47,8 @@ void GameOver::onResize(brac::vec2 const & size) {
 }
 
 std::unique_ptr<TouchHandler> GameOver::onTouch(vec2 const & worldPos, float radius) {
-    struct GameOverTouchHandler : TouchHandler {
-        Button & res;
-        Button & exi;
-        GameMode & m;
-        bool & newGame;
-        vec2 pos;
-        
-        GameOverTouchHandler(GameOver & self, vec2 const & p, float radius)
-        :   res(self.restart),
-            exi(self.exit),
-            m(self.mode),
-            newGame(self.newGame),
-            pos(p)
-        {
-            self.restart.pressed = self.restart.contains(p);
-            self.exit.pressed = self.exit.contains(p);
-        }
-        
-        ~GameOverTouchHandler() { }
-        
-        virtual void moved(vec2 const & p, bool) {
-            pos = p;
-            res.pressed = res.contains(p);
-            exi.pressed = exi.contains(p);
-        }
-        
-        virtual void ended() {
-            res.pressed = false;
-            exi.pressed = false;
-            if (res.contains(pos)) {
-                newGame = true;
-                res.clicked();
-            }
-            if (exi.contains(pos)) {
-                m = m_menu;
-                newGame = true;
-                exi.clicked();
-            }
-        }
-    };
-    return std::unique_ptr<TouchHandler>{new GameOverTouchHandler{*this, worldPos, radius}};
+    if (auto handler = Button::handleTouch(worldPos, {restart, exit})) {
+        return handler;
+    }
+    return TouchHandler::absorb();
 }

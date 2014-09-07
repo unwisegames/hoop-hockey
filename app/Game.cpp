@@ -285,99 +285,74 @@ Game::~Game() { }
 Game::State const & Game::state() const { return *m; }
 
 std::unique_ptr<TouchHandler> Game::fingerTouch(vec2 const & p, float radius) {
-    if (m->quit->contains(p)) {
-        struct ButtonHandler : TouchHandler {
-            std::weak_ptr<Button> weak_quit;
+    if (auto quitHandler = m->quit->handleTouch(p)) {
+        return quitHandler;
+    }
+    struct BounceTouchHandler : TouchHandler {
+        std::weak_ptr<Game> weak_self;
+        ConstraintPtr finger[2];
 
-            ButtonHandler(std::shared_ptr<Button> const & quit)
-            : weak_quit(quit)
-            {
-                quit->pressed = true;
+        BounceTouchHandler(Game & self, vec2 const & p, float radius)
+        : weak_self{self.shared_from_this()}
+        {
+            if (p.y < self.m->shot_line_y) {
+                PlatformImpl & platform{self.m->emplace<PlatformImpl>(p, radius)};
+
+                cpBody * world = self.m->spaceTime.staticBody;
+
+                constexpr float c = 50000;
+                constexpr float k = c * c / (4 * M_PLATFORM);  // Critically damped
+
+                finger[0].reset(cpDampedSpringNew(world, platform.body(), {1000, 0}, {0, 0}, 1000, k, c));
+                finger[1].reset(cpDampedSpringNew(world, platform.body(), {0, 1000}, {0, 0}, 1000, k, c));
+
+                for (int i = 0; i < 2; ++i) {
+                    cpSpaceAdd(&self.m->spaceTime, finger[i]);
+                }
+
+                adjustSprings(p);
+            } else {
+                foul();
             }
+        }
 
-            virtual void moved(vec2 const & p, bool) {
-                if (auto quit = weak_quit.lock()) {
-                    quit->pressed = quit->contains(p);
+        ~BounceTouchHandler() {
+            if (auto self = weak_self.lock()) {
+                if (!self->m->actors<PlatformImpl>().empty()) {
+                    self->m->removeWhenSpaceUnlocked(*self->m->actors<PlatformImpl>().begin());
                 }
             }
+        }
 
-            virtual void ended() override {
-                if (auto quit = weak_quit.lock()) {
-                    if (quit->pressed) {
-                        quit->clicked();
-                    }
-                }
-            }
-        };
-
-        return std::unique_ptr<TouchHandler>{new ButtonHandler{m->quit}};
-    } else {
-        struct BounceTouchHandler : TouchHandler {
-            std::weak_ptr<Game> weak_self;
-            ConstraintPtr finger[2];
-
-            BounceTouchHandler(Game & self, vec2 const & p, float radius)
-            : weak_self{self.shared_from_this()}
-            {
-                if (p.y < self.m->shot_line_y) {
-                    PlatformImpl & platform{self.m->emplace<PlatformImpl>(p, radius)};
-
-                    cpBody * world = self.m->spaceTime.staticBody;
-
-                    constexpr float c = 50000;
-                    constexpr float k = c * c / (4 * M_PLATFORM);  // Critically damped
-
-                    finger[0].reset(cpDampedSpringNew(world, platform.body(), {1000, 0}, {0, 0}, 1000, k, c));
-                    finger[1].reset(cpDampedSpringNew(world, platform.body(), {0, 1000}, {0, 0}, 1000, k, c));
-
-                    for (int i = 0; i < 2; ++i) {
-                        cpSpaceAdd(&self.m->spaceTime, finger[i]);
-                    }
-
+        virtual void moved(vec2 const & p, bool) {
+            if (auto self = weak_self.lock()) {
+                if (!self->m->actors<PlatformImpl>().empty()) {
                     adjustSprings(p);
-                } else {
-                    foul();
-                }
-            }
-
-            ~BounceTouchHandler() {
-                if (auto self = weak_self.lock()) {
-                    if (!self->m->actors<PlatformImpl>().empty()) {
+                    if (p.y > self->m->shot_line_y) {
+                        foul();
                         self->m->removeWhenSpaceUnlocked(*self->m->actors<PlatformImpl>().begin());
                     }
                 }
             }
+        }
 
-            virtual void moved(vec2 const & p, bool) {
-                if (auto self = weak_self.lock()) {
-                    if (!self->m->actors<PlatformImpl>().empty()) {
-                        adjustSprings(p);
-                        if (p.y > self->m->shot_line_y) {
-                            foul();
-                            self->m->removeWhenSpaceUnlocked(*self->m->actors<PlatformImpl>().begin());
-                        }
-                    }
-                }
+        void foul() {
+            if (auto self = weak_self.lock()) {
+                self->foul();
+                self->m->line_state = line_red;
+                delay(0.5, [=]{ self->m->line_state = line_default; });
             }
+        }
 
-            void foul() {
-                if (auto self = weak_self.lock()) {
-                    self->foul();
-                    self->m->line_state = line_red;
-                    delay(0.5, [=]{ self->m->line_state = line_default; });
-                }
+        void adjustSprings(vec2 const & p) {
+            if (auto self = weak_self.lock()) {
+                cpDampedSpringSetRestLength(&*finger[0], length(p - vec2{1000, 0}));
+                cpDampedSpringSetRestLength(&*finger[1], length(p - vec2{0, 1000}));
             }
-
-            void adjustSprings(vec2 const & p) {
-                if (auto self = weak_self.lock()) {
-                    cpDampedSpringSetRestLength(&*finger[0], length(p - vec2{1000, 0}));
-                    cpDampedSpringSetRestLength(&*finger[1], length(p - vec2{0, 1000}));
-                }
-            }
-        };
-        
-        return std::unique_ptr<TouchHandler>{new BounceTouchHandler{*this, p, 0.8f + radius}};
-    }
+        }
+    };
+    
+    return std::unique_ptr<TouchHandler>{new BounceTouchHandler{*this, p, 0.8f + radius}};
 }
 
 void Game::doUpdate(float dt) { m->update(dt); }
