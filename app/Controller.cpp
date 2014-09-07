@@ -104,16 +104,16 @@ void Controller::newGame(GameMode mode) {
                           nullptr);
 
         size_t score = state.score;
-        if (score > 0) {
-            switch (state.mode) {
-                case m_arcade:
-                case m_buzzer:
-                    modeStats->reportScore(static_cast<int>(score));
-                    break;
-                case m_menu:
-                    break;
-            }
+        switch (state.mode) {
+            case m_arcade:
+            case m_buzzer:
+                modeStats->reportScore(static_cast<int>(score));
+                break;
+            case m_menu:
+                break;
+        }
 
+        if (score > 0) {
             if (score >= 25) {
                 brag::score25(100, []{});
                 if (score >= 100) {
