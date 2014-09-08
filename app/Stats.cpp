@@ -44,7 +44,7 @@ std::string durationString(int seconds) {
 Stats::Stats(Stats::State & state)
 : state(state)
 , arcadeAvg_(state.arcade.average())
-, buzzerAvg_(state.arcade.average())
+, buzzerAvg_(state.buzzer.average())
 {
     exit->clicked += [=]{ pop(); };
 
