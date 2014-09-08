@@ -30,7 +30,14 @@ std::string durationString(int seconds) {
     int s = seconds % 60;
 
     std::ostringstream oss;
-    oss << h << "H " << m << "M " << s << "SEC";
+    if (h > 0) {
+        oss << h << "H ";
+    }
+    if (m > 0) {
+        oss << m << "M ";
+    }
+    oss << s << "SEC";
+
     return oss.str();
 }
 
