@@ -14,9 +14,9 @@
 class Stats : public brac::GameController {
 public:
     struct ModeState {
-        brac::Persistent<int>   careerPoints {"careerArcPoints"};
-        brac::Persistent<int>   bestScore    {"bestArcScore"};
-        brac::Persistent<int>   gamesPlayed  {"arcGamesPlayed"};
+        brac::Persistent<int>   careerPoints;
+        brac::Persistent<int>   bestScore;
+        brac::Persistent<int>   gamesPlayed;
         brac::Leaderboard & leaderboardBestScore;
 
         ModeState(std::string const & prefix, brac::Leaderboard & leaderboardBestScore)
@@ -29,8 +29,10 @@ public:
         std::string average() const;
 
         void reportScore(int score) {
-            ++gamesPlayed;
-            careerPoints += score;
+            //++gamesPlayed;
+            gamesPlayed = ++*gamesPlayed;
+            //careerPoints += score;
+            careerPoints = *careerPoints + score;
             if (*bestScore < score) {
                 bestScore = score;
                 leaderboardBestScore = score;

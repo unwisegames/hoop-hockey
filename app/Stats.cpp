@@ -17,7 +17,8 @@ using namespace brac;
 std::string Stats::ModeState::average() const {
     if (*gamesPlayed) {
         std::ostringstream oss;
-        (oss << std::setprecision(2) << (float(*careerPoints) / *gamesPlayed));
+        //(oss << std::setprecision(2) << (float(*careerPoints) / *gamesPlayed)); This is returning whole numbers; not sure why. Reverting for now.
+        (oss << roundf((float(*careerPoints) / float(*gamesPlayed)) * 100) / 100);
         return oss.str();
     }
     return "0";
