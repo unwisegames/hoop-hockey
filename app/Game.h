@@ -42,6 +42,7 @@ public:
         float shot_line_y = 0;
         float duration = 0;
         std::shared_ptr<Button> quit{std::make_shared<Button>(atlas.back, brac::vec2{-4.8, 10})};
+        bool quitting = false;
     };
 
     brac::Signal<void()> show_menu;

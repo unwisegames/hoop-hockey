@@ -266,6 +266,7 @@ Game::Game(SpaceTime & spaceTime, GameMode mode, float tly, float sly) : GameBas
         });
 
         m->quit->clicked += [=]{
+            m->quitting = true;
             gameOver();
         };
     }

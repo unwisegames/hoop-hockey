@@ -128,10 +128,14 @@ void Controller::newGame(GameMode mode) {
             brag::points10000(100 * clamp(cp / 10000.0f, 0, 1), []{});
         }
 
-        auto gameOver = emplaceController<GameOver>(mode, score, *modeStats->bestScore);
-
-        gameOver->restart   ->clicked += newGame(m->mode);
-        gameOver->exit      ->clicked += newGame(m_menu);
+        if (state.quitting) {
+            m->mode = m_menu;
+            m->newGame = true;
+        } else {
+            auto gameOver = emplaceController<GameOver>(mode, score, *modeStats->bestScore);
+            gameOver->restart   ->clicked += newGame(m->mode);
+            gameOver->exit      ->clicked += newGame(m_menu);
+        }
     };
 
     m->game->show_menu += [=] {
