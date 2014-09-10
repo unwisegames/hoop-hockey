@@ -61,7 +61,6 @@ void Stats::onDraw() {
         SpriteProgram::drawText(text, menufont.glyphs, 0, pmv() * mat4::translate({pos, 0}) * mat4::scale(scale), 0.05);
     };
 
-    SpriteProgram::draw(overlay.fade, pmv());
     SpriteProgram::draw(overlay.window, pmv() * mat4::scale({1.27, 1.22, 1.22}));
 
     drawText("CAREER", {0, 6.8}, 0.55);
