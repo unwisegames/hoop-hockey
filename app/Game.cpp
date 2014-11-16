@@ -87,7 +87,6 @@ struct Game::Members : Game::State, GameImpl<CharacterImpl, PlatformImpl, Barrie
     int bounced_walls = 0;
     size_t score_modifier = 0;
     std::unique_ptr<Ticker> tick;
-    std::unique_ptr<CancelTimer> hoop_timer;
     brac::Stopwatch watch{false};
 
     Members(SpaceTime & spaceTime) : Impl(spaceTime) { }
@@ -213,8 +212,7 @@ Game::Game(SpaceTime & spaceTime, GameMode mode, float tly, float sly) : GameBas
                 m->score += BASE_SCORE + m->score_modifier;
                 scored();
                 m->hoop_state = hoop_on;
-                m->hoop_timer.reset(new CancelTimer(delay(1.8, [=]{ m->hoop_state = hoop_off; })));
-                m->hoop_timer->cancel(destroyed);
+                delay(1.8, [=]{ m->hoop_state = hoop_off; }).cancel(destroyed);
                 //m->actors<SwishImpl>().emplace(vec2{0, 5});
                 if (BASE_SCORE + m->score_modifier == 3) {
                     m->alert = "3 POINTS!";
